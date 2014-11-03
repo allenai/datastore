@@ -16,7 +16,7 @@ object CommonBuild extends Build {
     resolvers ++= Dependencies.Resolvers,
     licenses := Seq(
       "Apache 2.0" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt"))) ++ 
-    CoreSettings.publishToRepos.ai2.publicRepo ++
+    CoreSettings.publishToRepos.ai2.privateRepo ++
     releaseSettings
 
   lazy val datastore = Project(
