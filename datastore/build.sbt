@@ -1,7 +1,7 @@
 import Dependencies._
 import org.allenai.sbt.core.CoreDependencies._
 
-name := "common-datastore"
+name := "datastore"
 
 libraryDependencies ++= Seq(
   slf4j,

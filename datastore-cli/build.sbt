@@ -2,7 +2,7 @@ import Dependencies._
 
 import AssemblyKeys._
 
-name := "common-datastore-cli"
+name := "datastore-cli"
 
 libraryDependencies ++= Seq(slf4j, scopt, logbackClassic, logbackCore)
 
