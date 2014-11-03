@@ -2,10 +2,6 @@ import sbt._
 
 /** Object holding the dependencies Common has, plus resolvers and overrides. */
 object Dependencies {
-  //val Resolvers = Seq(
-  //  "spray repo" at "http://repo.spray.io",
-  //  Resolver.sonatypeRepo("snapshots"))
-
   val Resolvers = Seq(
     "AllenAI Snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots",
     "AllenAI Releases" at "http://utility.allenai.org:8081/nexus/content/repositories/releases",
@@ -13,8 +9,6 @@ object Dependencies {
     "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public")
 
   val Overrides = Set("org.scala-lang" % "scala-library" % "2.10.4")
-
-  def akkaModule(id: String) = "com.typesafe.akka" %% s"akka-${id}" % "2.3.2"
 
   val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.11.4"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.0"
