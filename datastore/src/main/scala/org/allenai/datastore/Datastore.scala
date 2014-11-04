@@ -204,13 +204,14 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   private def copyStreams(
     ic: ReadableByteChannel,
     oc: WritableByteChannel,
-    filename: String): Unit = {
+    filename: String,
+    silent: Boolean = false): Unit = {
     val buffer = ByteBuffer.allocateDirect(1024 * 1024)
 
     val loggingDelay = 1000 // milliseconds
     val startTime = System.currentTimeMillis
     var lastLogMessage = startTime
-    def shouldLog = System.currentTimeMillis - lastLogMessage >= loggingDelay
+    def shouldLog = !silent && System.currentTimeMillis - lastLogMessage >= loggingDelay
     var bytesCopied: Long = 0
 
     while (ic.read(buffer) >= 0) {
@@ -233,7 +234,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     while (buffer.hasRemaining)
       oc.write(buffer)
 
-    if (System.currentTimeMillis - startTime >= loggingDelay) {
+    if (!silent && System.currentTimeMillis - startTime >= loggingDelay) {
       logger.info(
         s"Downloaded $filename from the $name datastore. " +
           s"${formatBytes(bytesCopied)} bytes read.")
@@ -303,7 +304,10 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
               Files.newByteChannel(
                 tempFile,
                 StandardOpenOption.WRITE,
-                StandardOpenOption.TRUNCATE_EXISTING)) { case (input, output) => copyStreams(input, output, locator.s3key) }
+                StandardOpenOption.TRUNCATE_EXISTING))
+            {
+              case (input, output) => copyStreams(input, output, locator.s3key)
+            }
           } catch {
             case e: AmazonS3Exception if e.getErrorCode == "NoSuchKey" =>
               throw new DoesNotExistException(locator, e)
@@ -330,7 +334,10 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
                       Files.newByteChannel(pathForEntry,
                         StandardOpenOption.WRITE,
                         StandardOpenOption.CREATE,
-                        StandardOpenOption.TRUNCATE_EXISTING)) { case (input, output) => copyStreams(input, output, locator.s3key) }
+                        StandardOpenOption.TRUNCATE_EXISTING))
+                    {
+                      case (input, output) => copyStreams(input, output, locator.s3key, true)
+                    }
                   }
                 }
               }
