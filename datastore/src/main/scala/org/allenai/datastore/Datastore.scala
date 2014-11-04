@@ -36,7 +36,7 @@ import java.util.zip.{ ZipEntry, ZipOutputStream, ZipFile }
   * @param s3   properly authenticated S3 client.
   */
 class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
-  private val cacheDir = {
+  private val baseCacheDir = {
     val defaultCacheDir = if (System.getProperty("os.name").contains("Mac OS X")) {
       Paths.get(System.getProperty("user.home")).
         resolve("Library").
@@ -51,13 +51,16 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     val envCacheDir = System.getenv("AI2_DATASTORE_DIR")
     val propCacheDir = System.getProperty("org.allenai.datastore.dir")
 
-    val baseDir = Seq(envCacheDir, propCacheDir).
+    Seq(envCacheDir, propCacheDir).
       filter(_ != null).
       map(Paths.get(_)).
       headOption.getOrElse(defaultCacheDir)
-
-    baseDir.resolve(name)
   }
+
+  private val cacheDir = baseCacheDir.resolve(name)
+  private val tempDir = baseCacheDir.resolve("tmp")
+    // tempDir must be on the same filesystem as the cache itself, so that's why we put it here
+  Files.createDirectories(tempDir)
 
   /** Returns the name of the bucket backing this datastore
     */
@@ -296,7 +299,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
           // the file directly, and we died half-way through the download, we'd
           // leave half a file, and that's not good.
           val tempFile =
-            Files.createTempFile("ai2-datastore-" + locator.flatLocalCacheKey, ".tmp")
+            Files.createTempFile(tempDir, "ai2-datastore-" + locator.flatLocalCacheKey, ".tmp")
           TempCleanup.remember(tempFile)
           try {
             Resource.using2(
@@ -314,9 +317,9 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
           }
 
           if (locator.directory) {
-            val tempDir =
-              Files.createTempDirectory("ai2-datastore-" + locator.flatLocalCacheKey)
-            TempCleanup.remember(tempDir)
+            val tempZipDir =
+              Files.createTempDirectory(tempDir, "ai2-datastore-" + locator.flatLocalCacheKey)
+            TempCleanup.remember(tempZipDir)
 
             // download and extract the zip file to the directory
             Resource.using(new ZipFile(tempFile.toFile)) { zipFile =>
@@ -324,7 +327,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
               while (entries.hasMoreElements) {
                 val entry = entries.nextElement()
                 if (entry.getName != "/") {
-                  val pathForEntry = tempDir.resolve(entry.getName)
+                  val pathForEntry = tempZipDir.resolve(entry.getName)
                   if (entry.isDirectory) {
                     Files.createDirectories(pathForEntry)
                   } else {
@@ -346,8 +349,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
             TempCleanup.forget(tempFile)
 
             // move the directory where it belongs
-            Files.move(tempDir, locator.localCachePath)
-            TempCleanup.forget(tempDir)
+            Files.move(tempZipDir, locator.localCachePath)
+            TempCleanup.forget(tempZipDir)
           } else {
             Files.createDirectories(locator.localCachePath.getParent)
             Files.move(tempFile, locator.localCachePath)
@@ -445,6 +448,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     if (locator.directory) {
       val zipFile =
         Files.createTempFile(
+          tempDir,
           locator.flatLocalCacheKey,
           ".ai2-datastore.upload.zip")
       TempCleanup.remember(zipFile)
