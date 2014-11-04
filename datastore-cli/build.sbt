@@ -4,7 +4,7 @@ import AssemblyKeys._
 
 name := "datastore-cli"
 
-libraryDependencies ++= Seq(slf4j, scopt, logbackClassic, logbackCore)
+libraryDependencies ++= Seq(jclOverSlf4j, slf4j, scopt, logbackClassic, logbackCore)
 
 assemblySettings
 
