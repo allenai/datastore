@@ -11,7 +11,7 @@ import org.apache.commons.io.FileUtils
 
 import scala.collection.JavaConversions._
 
-import java.io.{ OutputStream, InputStream }
+import java.io.InputStream
 import java.net.URL
 import java.nio.ByteBuffer
 import java.nio.channels.{ ReadableByteChannel, WritableByteChannel, Channels }
