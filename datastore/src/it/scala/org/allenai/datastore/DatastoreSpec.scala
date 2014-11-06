@@ -223,4 +223,36 @@ class DatastoreSpec extends UnitSpec with Logging {
       deleteDatastore(datastore)
     }
   }
+
+  it should "download a directory using a URL" in {
+    def listOfFiles(dir: Path) =
+      FileUtils.listFilesAndDirs(
+        dir.toFile,
+        TrueFileFilter.INSTANCE,
+        TrueFileFilter.INSTANCE).toList.sorted.map { p =>
+        dir.relativize(p.toPath)
+      }
+
+    val testfilesDir = copyTestFiles
+    val testfiles = listOfFiles(testfilesDir)
+    val datastore = makeTestDatastore
+    try {
+      datastore.publishDirectory(testfilesDir, group, "TestfilesDir", 11, false)
+
+      val urlString =
+        s"datastore://${datastore.name}/$group/TestfilesDir-d11/filledDir/small_file_in_dir.bin"
+      val fromUrl = IOUtils.toByteArray(new URL(urlString).openStream())
+
+      val fromDatastore =
+        IOUtils.toByteArray(
+          Files.newInputStream(
+            datastore.directoryPath(group, "TestfilesDir", 11).
+              resolve("filledDir").
+              resolve("small_file_in_dir.bin")))
+
+      assert(fromUrl === fromDatastore)
+    } finally {
+      deleteDatastore(datastore)
+    }
+  }
 }

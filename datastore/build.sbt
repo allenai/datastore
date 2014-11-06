@@ -10,3 +10,5 @@ libraryDependencies ++= Seq(
   commonsIO,
   allenAiCommon,
   allenAiTestkit % "test,it")
+
+fork in IntegrationTest := true
