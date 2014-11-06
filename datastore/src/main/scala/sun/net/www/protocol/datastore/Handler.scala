@@ -9,8 +9,7 @@ class Handler extends URLStreamHandler {
     val datastore = Datastore(u.getAuthority)
     val fileWithExtension = """([^/]+)/(.+)-v(\d+)\.(.*)""".r
     val fileWithoutExtension = """([^/]+)/(.+)-v(\d+)""".r
-    val directoryWithoutInnerPath = """([^/]+)/(.+)-d(\d+)""".r
-    val directoryWithInnerPath = """([^/]+)/(.+)-d(\d+)/(.*)""".r
+    val directory = """([^/]+)/(.+)-d(\d+)(?:/(.*))?""".r
 
     // pattern matching on Int
     object Int {
@@ -26,9 +25,9 @@ class Handler extends URLStreamHandler {
         datastore.filePath(group, s"$name.$ext", version)
       case fileWithoutExtension(group, name, Int(version)) =>
         datastore.filePath(group, name, version)
-      case directoryWithoutInnerPath(group, name, Int(version)) =>
+      case directory(group, name, Int(version), null) =>
         datastore.directoryPath(group, name, version)
-      case directoryWithInnerPath(group, name, Int(version), innerPath) =>
+      case directory(group, name, Int(version), innerPath) =>
         datastore.directoryPath(group, name, version).resolve(innerPath)
       case _ =>
         throw new IllegalArgumentException(s"$u cannot be parsed as a datastore URI")
