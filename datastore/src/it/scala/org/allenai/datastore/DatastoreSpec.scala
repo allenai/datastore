@@ -3,7 +3,7 @@ package org.allenai.datastore
 import org.allenai.common.{Logging, Timing, Resource}
 import org.allenai.common.testkit.UnitSpec
 
-import org.apache.commons.io.FileUtils
+import org.apache.commons.io.{IOUtils, FileUtils}
 import org.apache.commons.io.filefilter.TrueFileFilter
 
 import scala.collection.JavaConversions._
@@ -12,6 +12,7 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
 
+import java.net.URL
 import java.nio.file.{StandardCopyOption, Path, Files}
 import java.util.UUID
 import java.util.zip.ZipFile
@@ -195,6 +196,29 @@ class DatastoreSpec extends UnitSpec with Logging {
       val datastoreFiles = listOfFiles(datastoreDir)
 
       assert(testfiles === datastoreFiles)
+    } finally {
+      deleteDatastore(datastore)
+    }
+  }
+
+  it should "download files using a URL" in {
+    val testfilesDir = copyTestFiles
+    val filenames = Seq("small_file_at_root.bin", "medium_file_at_root.bin", "big_file_at_root.bin")
+    val datastore = makeTestDatastore
+    try {
+      for (filename <- filenames) {
+        val fullFilenameString = testfilesDir.toString + "/" + filename
+        datastore.publishFile(fullFilenameString, group, filename, 13, false)
+      }
+
+      for (filename <- filenames) {
+        val filenameWithVersion = filename.replace(".bin", "-v13.bin")
+        val u = new URL(s"datastore://${datastore.name}/$group/$filenameWithVersion")
+
+        val original = IOUtils.toByteArray(Files.newInputStream(testfilesDir.resolve(filename)))
+        val fromUrl = IOUtils.toByteArray(u.openStream())
+        assert(original === fromUrl)
+      }
     } finally {
       deleteDatastore(datastore)
     }
