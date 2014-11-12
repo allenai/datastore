@@ -2,7 +2,7 @@ package sun.net.www.protocol.datastore
 
 import org.allenai.datastore.Datastore
 
-import java.net.{URLConnection, URL, URLStreamHandler}
+import java.net.{ URLConnection, URL, URLStreamHandler }
 
 class Handler extends URLStreamHandler {
   override def openConnection(u: URL): URLConnection = {

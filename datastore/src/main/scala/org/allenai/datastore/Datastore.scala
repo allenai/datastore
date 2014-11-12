@@ -32,7 +32,7 @@ import java.util.zip.{ ZipEntry, ZipOutputStream, ZipFile }
   * creating them here.
   *
   * @param name name of the datastore. Corresponds to the name of the bucket in S3. Currently we
-  *        have "public" and "private".
+  *       have "public" and "private".
   * @param s3   properly authenticated S3 client.
   */
 class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
@@ -59,7 +59,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
 
   private val cacheDir = baseCacheDir.resolve(name)
   private val tempDir = baseCacheDir.resolve("tmp")
-    // tempDir must be on the same filesystem as the cache itself, so that's why we put it here
+  // tempDir must be on the same filesystem as the cache itself, so that's why we put it here
   Files.createDirectories(tempDir)
 
   /** Returns the name of the bucket backing this datastore
@@ -307,10 +307,9 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
               Files.newByteChannel(
                 tempFile,
                 StandardOpenOption.WRITE,
-                StandardOpenOption.TRUNCATE_EXISTING))
-            {
-              case (input, output) => copyStreams(input, output, locator.s3key)
-            }
+                StandardOpenOption.TRUNCATE_EXISTING)) {
+                case (input, output) => copyStreams(input, output, locator.s3key)
+              }
           } catch {
             case e: AmazonS3Exception if e.getErrorCode == "NoSuchKey" =>
               throw new DoesNotExistException(locator, e)
@@ -337,10 +336,9 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
                       Files.newByteChannel(pathForEntry,
                         StandardOpenOption.WRITE,
                         StandardOpenOption.CREATE,
-                        StandardOpenOption.TRUNCATE_EXISTING))
-                    {
-                      case (input, output) => copyStreams(input, output, locator.s3key, true)
-                    }
+                        StandardOpenOption.TRUNCATE_EXISTING)) {
+                        case (input, output) => copyStreams(input, output, locator.s3key, true)
+                      }
                   }
                 }
               }
@@ -559,7 +557,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   /** Lists all items in a group
     * @param group group to search over
     * @return a set of locators, one for each item in the group. Multiple versions are multiple
-    *   locators.
+    *  locators.
     */
   def listGroupContents(group: String): Set[Locator] = {
     val listObjectsRequest =
@@ -590,7 +588,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     * @param name    name of the directory
     * @param version version of the directory
     * @return URL pointing to the directory. This URL will always point to a zip file containing the
-    *   directory's contents.
+    *  directory's contents.
     */
   def directoryUrl(group: String, name: String, version: Int): URL =
     url(Locator(group, name, version, true))
