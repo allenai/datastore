@@ -8,6 +8,3 @@ cache:
   - $HOME/.ivy2/cache
 script:
   - sbt compile test
-after_script:
-  - mkdir -p shippable/testresults
-  - cp */target/test-reports/*.xml shippable/testresults
