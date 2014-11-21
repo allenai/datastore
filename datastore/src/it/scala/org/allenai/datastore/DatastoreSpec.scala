@@ -56,9 +56,9 @@ class DatastoreSpec extends UnitSpec with Logging {
     val datastore = Datastore(storename)
     datastore.createBucketIfNotExists()
 
-    // Wait 20 seconds, because bucket creation is not instantaneous in S3
-    logger.info("Waiting 20 seconds for bucket creation...")
-    Thread.sleep(20000)
+    // Wait 10 seconds, because bucket creation is not instantaneous in S3
+    logger.info("Waiting 10 seconds for bucket creation...")
+    Thread.sleep(10000)
 
     datastore
   }
@@ -165,9 +165,9 @@ class DatastoreSpec extends UnitSpec with Logging {
       }
 
       val delayInMs: Long = 250
-      val firstTime = future { Timing.time(downloadAndCheckFile) }
+      val firstTime = Future { Timing.time(downloadAndCheckFile) }
       Thread.sleep(delayInMs)
-      val secondTime = future { Timing.time(downloadAndCheckFile) }
+      val secondTime = Future { Timing.time(downloadAndCheckFile) }
 
       // The second one has to wait for the first one to finish before it can
       // finish, so it should be slower.
