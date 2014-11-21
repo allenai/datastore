@@ -8,7 +8,7 @@ object Dependencies {
     "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public")
 
-  val Overrides = Set("org.scala-lang" % "scala-library" % "2.10.4")
+  val Overrides = Set()
 
   val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.11.4"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.0"
