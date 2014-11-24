@@ -1,5 +1,5 @@
 import Dependencies._
-import org.allenai.sbt.core.CoreDependencies._
+import org.allenai.plugins.CoreDependencies._
 
 name := "datastore"
 
