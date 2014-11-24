@@ -15,7 +15,7 @@ object DatastoreBuild extends Build {
     resolvers ++= Dependencies.Resolvers,
     licenses := Seq(
       "Apache 2.0" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt"))) ++ 
-    CoreRepositories.PublishTo.ai2Private ++
+    CoreRepositories.PublishTo.ai2Public ++
     releaseSettings
 
   lazy val datastore = Project(
