@@ -1,5 +1,4 @@
 import Dependencies._
-import org.allenai.plugins.CoreDependencies._
 
 name := "datastore"
 
