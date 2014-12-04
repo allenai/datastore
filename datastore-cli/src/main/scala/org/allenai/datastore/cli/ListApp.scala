@@ -5,7 +5,8 @@ import org.allenai.datastore.Datastore
 object ListApp extends App {
   case class Config(
     datastore: Datastore = Datastore,
-    group: Option[String] = None)
+    group: Option[String] = None
+  )
 
   val parser = new scopt.OptionParser[Config]("scopt") {
     opt[String]('d', "datastore") action { (d, c) =>

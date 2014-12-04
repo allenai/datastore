@@ -9,7 +9,8 @@ object UrlApp extends App {
     group: String = null,
     name: String = null,
     version: Int = -1,
-    datastore: Datastore = Datastore)
+    datastore: Datastore = Datastore
+  )
 
   val parser = new scopt.OptionParser[Config]("scopt") {
     opt[Boolean]("assumeFile") action { (f, c) =>

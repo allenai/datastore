@@ -11,7 +11,8 @@ object UploadApp extends App {
     name: String = null,
     version: Int = -1,
     datastore: Datastore = Datastore,
-    overwrite: Boolean = false)
+    overwrite: Boolean = false
+  )
 
   val parser = new scopt.OptionParser[Config]("scopt") {
     opt[File]('p', "path") required () action { (p, c) =>
@@ -46,7 +47,8 @@ object UploadApp extends App {
       config.group,
       config.name,
       config.version,
-      config.path.isDirectory)
+      config.path.isDirectory
+    )
     config.datastore.publish(config.path.toPath, locator, config.overwrite)
   }
 }

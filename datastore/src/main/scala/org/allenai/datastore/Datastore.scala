@@ -32,7 +32,7 @@ import java.util.zip.{ ZipEntry, ZipOutputStream, ZipFile }
   * creating them here.
   *
   * @param name name of the datastore. Corresponds to the name of the bucket in S3. Currently we
-  *        have "public" and "private".
+  *       have "public" and "private".
   * @param s3   properly authenticated S3 client.
   */
 class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
@@ -59,7 +59,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
 
   private val cacheDir = baseCacheDir.resolve(name)
   private val tempDir = baseCacheDir.resolve("tmp")
-    // tempDir must be on the same filesystem as the cache itself, so that's why we put it here
+  // tempDir must be on the same filesystem as the cache itself, so that's why we put it here
   Files.createDirectories(tempDir)
 
   /** Returns the name of the bucket backing this datastore
@@ -126,9 +126,11 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     */
   class DoesNotExistException(
     locator: Locator,
-    cause: Throwable = null) extends Exception(
+    cause: Throwable = null
+  ) extends Exception(
     s"${locator.s3key} does not exist in the $name datastore",
-    cause)
+    cause
+  )
 
   /** Exception indicating that we tried to upload an item to the datastore that already exists.
     *
@@ -141,9 +143,11 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     */
   class AlreadyExistsException(
     locator: Locator,
-    cause: Throwable = null) extends Exception(
+    cause: Throwable = null
+  ) extends Exception(
     s"${locator.s3key} already exists in the $name datastore",
-    cause)
+    cause
+  )
 
   /** Utility function for getting an InputStream for an object in S3
     * @param key the key of the object
@@ -208,7 +212,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     ic: ReadableByteChannel,
     oc: WritableByteChannel,
     filename: String,
-    silent: Boolean = false): Unit = {
+    silent: Boolean = false
+  ): Unit = {
     val buffer = ByteBuffer.allocateDirect(1024 * 1024)
 
     val loggingDelay = 1000 // milliseconds
@@ -227,7 +232,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
       if (shouldLog) {
         logger.info(
           s"Downloading $filename from the $name datastore. " +
-            s"${formatBytes(bytesCopied)} bytes read.")
+            s"${formatBytes(bytesCopied)} bytes read."
+        )
         lastLogMessage = System.currentTimeMillis
       }
     }
@@ -240,7 +246,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     if (!silent && System.currentTimeMillis - startTime >= loggingDelay) {
       logger.info(
         s"Downloaded $filename from the $name datastore. " +
-          s"${formatBytes(bytesCopied)} bytes read.")
+          s"${formatBytes(bytesCopied)} bytes read."
+      )
     }
   }
 
@@ -307,10 +314,11 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
               Files.newByteChannel(
                 tempFile,
                 StandardOpenOption.WRITE,
-                StandardOpenOption.TRUNCATE_EXISTING))
-            {
-              case (input, output) => copyStreams(input, output, locator.s3key)
-            }
+                StandardOpenOption.TRUNCATE_EXISTING
+              )
+            ) {
+                case (input, output) => copyStreams(input, output, locator.s3key)
+              }
           } catch {
             case e: AmazonS3Exception if e.getErrorCode == "NoSuchKey" =>
               throw new DoesNotExistException(locator, e)
@@ -334,13 +342,15 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
                     Files.createDirectories(pathForEntry.getParent)
                     Resource.using2(
                       Channels.newChannel(zipFile.getInputStream(entry)),
-                      Files.newByteChannel(pathForEntry,
+                      Files.newByteChannel(
+                        pathForEntry,
                         StandardOpenOption.WRITE,
                         StandardOpenOption.CREATE,
-                        StandardOpenOption.TRUNCATE_EXISTING))
-                    {
-                      case (input, output) => copyStreams(input, output, locator.s3key, true)
-                    }
+                        StandardOpenOption.TRUNCATE_EXISTING
+                      )
+                    ) {
+                        case (input, output) => copyStreams(input, output, locator.s3key, true)
+                      }
                   }
                 }
               }
@@ -383,7 +393,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     group: String,
     name: String,
     version: Int,
-    overwrite: Boolean): Unit =
+    overwrite: Boolean
+  ): Unit =
     publishFile(Paths.get(file), group, name, version, overwrite)
 
   /** Publishes a file to the datastore
@@ -399,7 +410,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     group: String,
     name: String,
     version: Int,
-    overwrite: Boolean): Unit =
+    overwrite: Boolean
+  ): Unit =
     publish(file, Locator(group, name, version, false), overwrite)
 
   /** Publishes a directory to the datastore
@@ -415,7 +427,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     group: String,
     name: String,
     version: Int,
-    overwrite: Boolean): Unit =
+    overwrite: Boolean
+  ): Unit =
     publishDirectory(Paths.get(path), group, name, version, overwrite)
 
   /** Publishes a directory to the datastore
@@ -431,7 +444,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     group: String,
     name: String,
     version: Int,
-    overwrite: Boolean): Unit =
+    overwrite: Boolean
+  ): Unit =
     publish(path, Locator(group, name, version, true), overwrite)
 
   /** Publishes an item to the datastore
@@ -450,7 +464,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
         Files.createTempFile(
           tempDir,
           locator.flatLocalCacheKey,
-          ".ai2-datastore.upload.zip")
+          ".ai2-datastore.upload.zip"
+        )
       TempCleanup.remember(zipFile)
       try {
         Resource.using(new ZipOutputStream(Files.newOutputStream(zipFile))) { zip =>
@@ -463,7 +478,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
 
             override def preVisitDirectory(
               dir: Path,
-              attrs: BasicFileAttributes): FileVisitResult = {
+              attrs: BasicFileAttributes
+            ): FileVisitResult = {
               if (dir != path) {
                 zip.putNextEntry(new ZipEntry(path.relativize(dir).toString + "/"))
               }
@@ -532,7 +548,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   private def getAllListings(request: ListObjectsRequest): Seq[ObjectListing] = {
     def concatenateListings(
       listings: Seq[ObjectListing],
-      newListing: ObjectListing): Seq[ObjectListing] = {
+      newListing: ObjectListing
+    ): Seq[ObjectListing] = {
       val concatenation = listings :+ newListing
       if (newListing.isTruncated) {
         concatenateListings(concatenation, s3.listNextBatchOfObjects(newListing))
@@ -559,7 +576,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   /** Lists all items in a group
     * @param group group to search over
     * @return a set of locators, one for each item in the group. Multiple versions are multiple
-    *   locators.
+    *  locators.
     */
   def listGroupContents(group: String): Set[Locator] = {
     val listObjectsRequest =
@@ -590,7 +607,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     * @param name    name of the directory
     * @param version version of the directory
     * @return URL pointing to the directory. This URL will always point to a zip file containing the
-    *   directory's contents.
+    *  directory's contents.
     */
   def directoryUrl(group: String, name: String, version: Int): URL =
     url(Locator(group, name, version, true))
@@ -634,7 +651,8 @@ object Datastore extends Datastore("public", DefaultS3) {
   def apply(name: String, accessKey: String, secretAccessKey: String): Datastore =
     new Datastore(
       name,
-      new AmazonS3Client(new BasicAWSCredentials(accessKey, secretAccessKey)))
+      new AmazonS3Client(new BasicAWSCredentials(accessKey, secretAccessKey))
+    )
 }
 
 object PrivateDatastore extends Datastore("private", DefaultS3)
