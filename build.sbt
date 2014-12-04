@@ -18,7 +18,8 @@ lazy val buildSettings = Seq(
         <name>Paul Allen Institute for Artificial Intelligence</name>
         <email>dev-role@allenai.org</email>
       </developer>
-    </developers>)) ++
+    </developers>),
+  dependencyOverrides += "com.typesafe" % "config" % "1.2.1") ++
   PublishTo.sonatype
 
 lazy val datastore = Project(
