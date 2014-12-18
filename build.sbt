@@ -8,8 +8,8 @@ lazy val buildSettings = Seq(
   licenses := Seq("Apache 2.0" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt")),
   homepage := Some(url("https://github.com/allenai/datastore")),
   scmInfo := Some(ScmInfo(
-    url("https://github.com/allenai/common"),
-    "https://github.com/allenai/common.git")),
+    url("https://github.com/allenai/datastore"),
+    "https://github.com/allenai/datastore.git")),
   ReleaseKeys.publishArtifactsAction := PgpKeys.publishSigned.value,
   pomExtra := (
     <developers>
