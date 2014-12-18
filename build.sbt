@@ -11,14 +11,14 @@ lazy val buildSettings = Seq(
     url("https://github.com/allenai/datastore"),
     "https://github.com/allenai/datastore.git")),
   ReleaseKeys.publishArtifactsAction := PgpKeys.publishSigned.value,
-  pomExtra := (
+  pomExtra :=
     <developers>
       <developer>
         <id>allenai-dev-role</id>
         <name>Paul Allen Institute for Artificial Intelligence</name>
         <email>dev-role@allenai.org</email>
       </developer>
-    </developers>),
+    </developers>,
   dependencyOverrides += "com.typesafe" % "config" % "1.2.1") ++
   PublishTo.sonatype
 
