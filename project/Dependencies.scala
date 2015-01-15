@@ -6,7 +6,7 @@ import org.allenai.plugins.CoreDependencies
 object Dependencies extends CoreDependencies {
   val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.11.4"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.0"
-  val scalaReflection = "org.scala-lang" % "scala-reflect" % "2.10.4"
+  val scalaReflection = "org.scala-lang" % "scala-reflect" % "2.11.5"
   val pegdown = "org.pegdown" % "pegdown" % "1.4.2"
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.6"
   val awsJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.8.9.1" exclude("commons-logging", "commons-logging")
