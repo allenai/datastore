@@ -9,7 +9,7 @@ import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.{ ListObjectsRequest, ObjectListing, AmazonS3Exception }
 import org.apache.commons.io.FileUtils
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import java.io.InputStream
 import java.net.URL
@@ -570,13 +570,15 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
         withBucketName(bucketName).
         withPrefix("").
         withDelimiter("/")
-    getAllListings(listObjectsRequest).flatMap(_.getCommonPrefixes).map(_.stripSuffix("/")).toSet
+    getAllListings(listObjectsRequest)
+      .flatMap(_.getCommonPrefixes.asScala)
+      .map(_.stripSuffix("/")).toSet
   }
 
   /** Lists all items in a group
     * @param group group to search over
     * @return a set of locators, one for each item in the group. Multiple versions are multiple
-    *  locators.
+    * locators.
     */
   def listGroupContents(group: String): Set[Locator] = {
     val listObjectsRequest =
@@ -584,7 +586,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
         withBucketName(bucketName).
         withPrefix(group + "/").
         withDelimiter("/")
-    getAllListings(listObjectsRequest).flatMap(_.getObjectSummaries).map { os =>
+    getAllListings(listObjectsRequest).flatMap(_.getObjectSummaries.asScala).map { os =>
       Locator.fromKey(os.getKey)
     }.toSet
   }
@@ -607,7 +609,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     * @param name    name of the directory
     * @param version version of the directory
     * @return URL pointing to the directory. This URL will always point to a zip file containing the
-    *  directory's contents.
+    * directory's contents.
     */
   def directoryUrl(group: String, name: String, version: Int): URL =
     url(Locator(group, name, version, true))
