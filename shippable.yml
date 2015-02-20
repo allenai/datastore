@@ -8,3 +8,5 @@ cache:
   - $HOME/.ivy2/cache
 script:
   - sbt formatCheckStrict styleCheckStrict compile datastore-cli/assembly test
+  - echo "Smoke-checking DatastoreCli.jar:"
+  - java -jar datastore-cli/target/scala-2.11/DatastoreCli.jar list
