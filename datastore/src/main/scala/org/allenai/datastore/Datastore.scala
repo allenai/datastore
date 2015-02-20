@@ -586,7 +586,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
         withBucketName(bucketName).
         withPrefix(group + "/").
         withDelimiter("/")
-    getAllListings(listObjectsRequest).flatMap(_.getObjectSummaries.asScala).map { os =>
+    val objects = getAllListings(listObjectsRequest).flatMap(_.getObjectSummaries.asScala)
+    objects.filter(_.getKey != group + "/").map { os =>
       Locator.fromKey(os.getKey)
     }.toSet
   }
