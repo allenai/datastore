@@ -7,4 +7,4 @@ cache:
   directories:
   - $HOME/.ivy2/cache
 script:
-  - sbt formatCheckStrict styleCheckStrict compile test
+  - sbt formatCheckStrict styleCheckStrict compile datastore-cli/assembly test
