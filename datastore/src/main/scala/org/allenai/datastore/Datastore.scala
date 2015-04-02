@@ -12,7 +12,7 @@ import org.apache.commons.io.FileUtils
 import scala.collection.JavaConverters._
 
 import java.io.InputStream
-import java.net.URL
+import java.net.{ URI, URL }
 import java.nio.ByteBuffer
 import java.nio.channels.{ ReadableByteChannel, WritableByteChannel, Channels }
 import java.nio.file._
@@ -90,6 +90,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     private[Datastore] def flatLocalCacheKey: String = localCacheKey.replace('/', '%')
     private[Datastore] def localCachePath: Path = cacheDir.resolve(localCacheKey)
     private[Datastore] def lockfilePath: Path = cacheDir.resolve(localCacheKey + ".lock")
+
+    def path = Datastore.this.path(this)
   }
 
   object Locator {
@@ -656,6 +658,38 @@ object Datastore extends Datastore("public", DefaultS3) {
       name,
       new AmazonS3Client(new BasicAWSCredentials(accessKey, secretAccessKey))
     )
+
+  def locatorFromUrl(uri: URI) = {
+    def error = throw new IllegalArgumentException(s"$uri cannot be parsed as a datastore URI")
+
+    if (uri.getScheme == "datastore") {
+      val fileWithExtension = """([^/]+)/(.+)-v(\d+)\.(.*)""".r
+      val fileWithoutExtension = """([^/]+)/(.+)-v(\d+)""".r
+      val directory = """([^/]+)/(.+)-d(\d+)""".r
+
+      // pattern matching on Int
+      object Int {
+        def unapply(s: String): Option[Int] = try {
+          Some(s.toInt)
+        } catch {
+          case _: java.lang.NumberFormatException => None
+        }
+      }
+
+      def datastore = Datastore(uri.getAuthority)
+      uri.getPath.stripPrefix("/") match {
+        case fileWithExtension(group, name, Int(version), ext) =>
+          datastore.Locator(group, s"$name.$ext", version, false)
+        case fileWithoutExtension(group, name, Int(version)) =>
+          datastore.Locator(group, name, version, false)
+        case directory(group, name, Int(version)) =>
+          datastore.Locator(group, name, version, true)
+        case _ => error
+      }
+    } else {
+      error
+    }
+  }
 }
 
 object PrivateDatastore extends Datastore("private", DefaultS3)
