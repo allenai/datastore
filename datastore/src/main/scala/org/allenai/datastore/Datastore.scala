@@ -1,23 +1,23 @@
 package org.allenai.datastore
 
-import org.allenai.common.Resource
-import org.allenai.common.Logging
-
-import com.amazonaws.AmazonServiceException
-import com.amazonaws.auth.BasicAWSCredentials
-import com.amazonaws.services.s3.AmazonS3Client
-import com.amazonaws.services.s3.model.{ ListObjectsRequest, ObjectListing, AmazonS3Exception }
-import org.apache.commons.io.FileUtils
-
-import scala.collection.JavaConverters._
-
 import java.io.InputStream
 import java.net.{ URI, URL }
 import java.nio.ByteBuffer
-import java.nio.channels.{ ReadableByteChannel, WritableByteChannel, Channels }
+import java.nio.channels.{ Channels, ReadableByteChannel, WritableByteChannel }
 import java.nio.file._
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.zip.{ ZipEntry, ZipOutputStream, ZipFile }
+import java.util.zip.{ ZipEntry, ZipFile, ZipOutputStream }
+
+import com.amazonaws.AmazonServiceException
+import com.amazonaws.auth.BasicAWSCredentials
+import com.amazonaws.event.{ ProgressEvent, ProgressListener }
+import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.services.s3.model._
+import com.amazonaws.services.s3.transfer.TransferManager
+import org.allenai.common.{ Logging, Resource }
+import org.apache.commons.io.FileUtils
+
+import scala.collection.JavaConverters._
 
 /** Represents a datastore
   *
@@ -382,6 +382,31 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   // Putting data into the datastore
   //
 
+  private def multipartUpload(path: Path, locator: Locator): Unit = {
+    val tm = new TransferManager(s3)
+    try {
+      val request = new PutObjectRequest(bucketName, locator.s3key, path.toFile)
+      request.setGeneralProgressListener(new ProgressListener {
+        private var lastLogMessage = System.currentTimeMillis()
+
+        override def progressChanged(progressEvent: ProgressEvent): Unit = {
+          val now = System.currentTimeMillis()
+          if (now - lastLogMessage >= 1000) {
+            logger.info(
+              s"Uploading $path to the $name datastore. " +
+                s"${formatBytes(progressEvent.getBytesTransferred)} bytes written."
+            )
+            lastLogMessage = now
+          }
+        }
+      })
+
+      tm.upload(request).waitForCompletion()
+    } finally {
+      tm.shutdownNow(false)
+    }
+  }
+
   /** Publishes a file to the datastore
     *
     * @param file      name of the file to be published
@@ -490,13 +515,13 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
           })
         }
 
-        s3.putObject(bucketName, locator.s3key, zipFile.toFile)
+        multipartUpload(zipFile, locator)
       } finally {
         Files.deleteIfExists(zipFile)
         TempCleanup.forget(zipFile)
       }
     } else {
-      s3.putObject(bucketName, locator.s3key, path.toFile)
+      multipartUpload(path, locator)
     }
   }
 
