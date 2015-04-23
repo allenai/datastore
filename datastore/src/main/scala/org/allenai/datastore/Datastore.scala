@@ -1,25 +1,23 @@
 package org.allenai.datastore
 
-import com.amazonaws.event.{ ProgressEvent, ProgressListener }
-import com.amazonaws.services.s3.transfer.TransferManager
-import org.allenai.common.Resource
-import org.allenai.common.Logging
-
-import com.amazonaws.AmazonServiceException
-import com.amazonaws.auth.BasicAWSCredentials
-import com.amazonaws.services.s3.AmazonS3Client
-import com.amazonaws.services.s3.model._
-import org.apache.commons.io.FileUtils
-
-import scala.collection.JavaConverters._
-
 import java.io.InputStream
 import java.net.{ URI, URL }
 import java.nio.ByteBuffer
-import java.nio.channels.{ ReadableByteChannel, WritableByteChannel, Channels }
+import java.nio.channels.{ Channels, ReadableByteChannel, WritableByteChannel }
 import java.nio.file._
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.zip.{ ZipEntry, ZipOutputStream, ZipFile }
+import java.util.zip.{ ZipEntry, ZipFile, ZipOutputStream }
+
+import com.amazonaws.AmazonServiceException
+import com.amazonaws.auth.BasicAWSCredentials
+import com.amazonaws.event.{ ProgressEvent, ProgressListener }
+import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.services.s3.model._
+import com.amazonaws.services.s3.transfer.TransferManager
+import org.allenai.common.{ Logging, Resource }
+import org.apache.commons.io.FileUtils
+
+import scala.collection.JavaConverters._
 
 /** Represents a datastore
   *

@@ -1,11 +1,10 @@
 package org.allenai.datastore
 
-import org.allenai.common.Logging
-
-import org.apache.commons.io.FileUtils
-
 import java.nio.file.{ DirectoryNotEmptyException, Files, Path }
 import java.util.concurrent.ConcurrentSkipListSet
+
+import org.allenai.common.Logging
+import org.apache.commons.io.FileUtils
 
 /** Remembers temporary files and directories that have to be cleaned up before
   * the JVM exits, and cleans them up when the JVM exits. As opposed to Java's File.deleteonexit(),

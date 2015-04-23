@@ -1,21 +1,20 @@
 package org.allenai.datastore
 
-import org.allenai.common.{Logging, Timing, Resource}
-import org.allenai.common.testkit.UnitSpec
-
-import org.apache.commons.io.{IOUtils, FileUtils}
-import org.apache.commons.io.filefilter.TrueFileFilter
-
-import scala.collection.JavaConversions._
-import scala.concurrent._
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.language.postfixOps
-
 import java.net.URL
-import java.nio.file.{StandardCopyOption, Path, Files}
+import java.nio.file.{ Files, Path, StandardCopyOption }
 import java.util.UUID
 import java.util.zip.ZipFile
+
+import org.allenai.common.testkit.UnitSpec
+import org.allenai.common.{ Logging, Resource, Timing }
+import org.apache.commons.io.filefilter.TrueFileFilter
+import org.apache.commons.io.{ FileUtils, IOUtils }
+
+import scala.collection.JavaConversions._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent._
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
 class DatastoreSpec extends UnitSpec with Logging {
   private val group = "org.allenai.datastore.test"
@@ -36,7 +35,7 @@ class DatastoreSpec extends UnitSpec with Logging {
       while (entries.hasMoreElements) {
         val entry = entries.nextElement()
         val pathForEntry = zipdir.resolve(entry.getName)
-        if(entry.isDirectory) {
+        if (entry.isDirectory) {
           Files.createDirectories(pathForEntry)
         } else {
           Files.createDirectories(pathForEntry.getParent)
@@ -71,7 +70,7 @@ class DatastoreSpec extends UnitSpec with Logging {
     val s3 = datastore.s3
     val bucket = datastore.bucketName
     var listing = s3.listObjects(bucket)
-    while(listing != null) {
+    while (listing != null) {
       listing.getObjectSummaries.toList.foreach(summary =>
         s3.deleteObject(bucket, summary.getKey))
 
@@ -182,9 +181,10 @@ class DatastoreSpec extends UnitSpec with Logging {
       FileUtils.listFilesAndDirs(
         dir.toFile,
         TrueFileFilter.INSTANCE,
-        TrueFileFilter.INSTANCE).toList.sorted.map { p =>
-          dir.relativize(p.toPath)
-        }
+        TrueFileFilter.INSTANCE
+      ).toList.sorted.map { p =>
+        dir.relativize(p.toPath)
+      }
 
     val testfilesDir = copyTestFiles
     val testfiles = listOfFiles(testfilesDir)
@@ -229,7 +229,8 @@ class DatastoreSpec extends UnitSpec with Logging {
       FileUtils.listFilesAndDirs(
         dir.toFile,
         TrueFileFilter.INSTANCE,
-        TrueFileFilter.INSTANCE).toList.sorted.map { p =>
+        TrueFileFilter.INSTANCE
+      ).toList.sorted.map { p =>
         dir.relativize(p.toPath)
       }
 
@@ -248,7 +249,9 @@ class DatastoreSpec extends UnitSpec with Logging {
           Files.newInputStream(
             datastore.directoryPath(group, "TestfilesDir", 11).
               resolve("filledDir").
-              resolve("small_file_in_dir.bin")))
+              resolve("small_file_in_dir.bin")
+          )
+        )
 
       assert(fromUrl === fromDatastore)
     } finally {
