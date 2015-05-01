@@ -1,8 +1,9 @@
 package org.allenai.datastore.cli
 
-/**
- * Created by michaels on 5/1/15.
- */
-class Common {
-
+object Common {
+  def printDefaultDatastoreWarning() = {
+    System.err.println("No datastore explicitly specified.")
+    System.err.println("The default (public) datastore will be used.")
+    System.err.println("To specify another datastore (such as 'private'), use `-d private`.")
+  }
 }

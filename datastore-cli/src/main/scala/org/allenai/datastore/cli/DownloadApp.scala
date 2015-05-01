@@ -9,7 +9,7 @@ object DownloadApp extends App {
     group: String = null,
     name: String = null,
     version: Int = -1,
-    datastore: Datastore = Datastore
+    datastore: Option[Datastore] = None
   )
 
   val parser = new scopt.OptionParser[Config]("scopt") {
@@ -45,14 +45,19 @@ object DownloadApp extends App {
     } text ("Version number of the object in the datastore")
 
     opt[String]('d', "datastore") action { (d, c) =>
-      c.copy(datastore = Datastore(d))
+      c.copy(datastore = Some(Datastore(d)))
     } text (s"Datastore to use. Default is ${Datastore.defaultName}")
 
     help("help")
   }
 
   parser.parse(args, Config()) foreach { config =>
-    val datastore = config.datastore
+    val datastore = config.datastore match {
+      case Some(datastore) => datastore
+      case None =>
+        Common.printDefaultDatastoreWarning()
+        Datastore
+    }
     val directory = if (config.assumeDirectory) {
       true
     } else if (config.assumeFile) {
