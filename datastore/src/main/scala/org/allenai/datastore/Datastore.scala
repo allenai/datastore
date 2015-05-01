@@ -95,6 +95,12 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   }
 
   object Locator {
+    implicit val defaultOrdering = new Ordering[Locator] {
+      def compare(x: Locator, y: Locator): Int = {
+        val ordering = implicitly[Ordering[(String, Int, Boolean)]]
+        ordering.compare((x.name, x.version, x.directory), (y.name, x.version, x.directory))
+      }
+    }
     private[Datastore] def fromKey(key: String) = {
       val withExtension = """([^/]*)/(.*)-(.)(\d*)\.(.*)""".r
       val withoutExtension = """([^/]*)/(.*)-(.)(\d*)""".r
@@ -591,7 +597,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   /** Lists all groups in the datastore
     * @return a set of all groups in the datastore
     */
-  def listGroups: Set[String] = {
+  def listGroups: collection.SortedSet[String] = {
     val listObjectsRequest =
       new ListObjectsRequest().
         withBucketName(bucketName).
@@ -599,7 +605,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
         withDelimiter("/")
     getAllListings(listObjectsRequest)
       .flatMap(_.getCommonPrefixes.asScala)
-      .map(_.stripSuffix("/")).toSet
+      .map(_.stripSuffix("/")).to[collection.SortedSet]
   }
 
   /** Lists all items in a group
@@ -607,7 +613,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     * @return a set of locators, one for each item in the group. Multiple versions are multiple
     * locators.
     */
-  def listGroupContents(group: String): Set[Locator] = {
+  def listGroupContents(group: String): collection.SortedSet[Locator] = {
     val listObjectsRequest =
       new ListObjectsRequest().
         withBucketName(bucketName).
@@ -616,7 +622,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     val objects = getAllListings(listObjectsRequest).flatMap(_.getObjectSummaries.asScala)
     objects.filter(_.getKey != group + "/").map { os =>
       Locator.fromKey(os.getKey)
-    }.toSet
+    }.to[collection.SortedSet]
   }
 
   //

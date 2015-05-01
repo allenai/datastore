@@ -10,7 +10,7 @@ object UploadApp extends App {
     group: String = null,
     name: String = null,
     version: Int = -1,
-    datastore: Datastore = Datastore,
+    datastore: Option[Datastore] = None,
     overwrite: Boolean = false
   )
 
@@ -32,7 +32,7 @@ object UploadApp extends App {
     } text ("Version number to store the file or directory under")
 
     opt[String]('d', "datastore") action { (d, c) =>
-      c.copy(datastore = Datastore(d))
+      c.copy(datastore = Some(Datastore(d)))
     } text (s"Datastore to use. Default is ${Datastore.defaultName}")
 
     opt[Boolean]("overwrite") action { (_, c) =>
@@ -43,12 +43,19 @@ object UploadApp extends App {
   }
 
   parser.parse(args, Config()) foreach { config =>
-    val locator = config.datastore.Locator(
+    val datastore = config.datastore match {
+      case Some(datastore) => datastore
+      case None =>
+        Common.printDefaultDatastoreWarning()
+        Datastore
+    }
+
+    val locator = datastore.Locator(
       config.group,
       config.name,
       config.version,
       config.path.isDirectory
     )
-    config.datastore.publish(config.path.toPath, locator, config.overwrite)
+    datastore.publish(config.path.toPath, locator, config.overwrite)
   }
 }
