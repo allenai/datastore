@@ -18,21 +18,23 @@ object ListApp extends App {
     } text ("Group name of the objects to list")
   }
 
-  parser.parse(args, Config()) foreach { config =>
-    val datastore = config.datastore match {
-      case Some(datastore) => datastore
-      case None =>
-        Common.printDefaultDatastoreWarning()
-        Datastore
-    }
-    config.group match {
-      case None =>
-        datastore.listGroups.foreach(println)
-      case Some(group) =>
-        datastore.listGroupContents(group).foreach { l =>
-          val nameSuffix = if (l.directory) "/" else ""
-          println(s"${l.name}$nameSuffix\t${l.version}")
-        }
+  Common.handleDatastoreExceptions {
+    parser.parse(args, Config()) foreach { config =>
+      val datastore = config.datastore match {
+        case Some(datastore) => datastore
+        case None =>
+          Common.printDefaultDatastoreWarning()
+          Datastore
+      }
+      config.group match {
+        case None =>
+          datastore.listGroups.foreach(println)
+        case Some(group) =>
+          datastore.listGroupContents(group).foreach { l =>
+            val nameSuffix = if (l.directory) "/" else ""
+            println(s"${l.name}$nameSuffix\t${l.version}")
+          }
+      }
     }
   }
 }

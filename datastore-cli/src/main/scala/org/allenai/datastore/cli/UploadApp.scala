@@ -42,20 +42,22 @@ object UploadApp extends App {
     help("help")
   }
 
-  parser.parse(args, Config()) foreach { config =>
-    val datastore = config.datastore match {
-      case Some(datastore) => datastore
-      case None =>
-        Common.printDefaultDatastoreWarning()
-        Datastore
-    }
+  Common.handleDatastoreExceptions {
+    parser.parse(args, Config()) foreach { config =>
+      val datastore = config.datastore match {
+        case Some(datastore) => datastore
+        case None =>
+          Common.printDefaultDatastoreWarning()
+          Datastore
+      }
 
-    val locator = datastore.Locator(
-      config.group,
-      config.name,
-      config.version,
-      config.path.isDirectory
-    )
-    datastore.publish(config.path.toPath, locator, config.overwrite)
+      val locator = datastore.Locator(
+        config.group,
+        config.name,
+        config.version,
+        config.path.isDirectory
+      )
+      datastore.publish(config.path.toPath, locator, config.overwrite)
+    }
   }
 }

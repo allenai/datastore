@@ -127,6 +127,9 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     }
   }
 
+  /** Common base class for all datastore exceptions, so they can be caught together */
+  class Exception(message: String, cause: Throwable) extends scala.Exception(message, cause)
+
   /** Exception indicating that we tried to access an item in the datastore that wasn't there.
     *
     * @param locator Locator of the object that wasn't there

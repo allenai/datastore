@@ -11,13 +11,15 @@ object WipeCacheApp extends App {
     } text (s"Datastore to use. Default is ${Datastore.defaultName}")
   }
 
-  parser.parse(args, Config()) foreach { config =>
-    val datastore = config.datastore match {
-      case Some(datastore) => datastore
-      case None =>
-        Common.printDefaultDatastoreWarning()
-        Datastore
+  Common.handleDatastoreExceptions {
+    parser.parse(args, Config()) foreach { config =>
+      val datastore = config.datastore match {
+        case Some(datastore) => datastore
+        case None =>
+          Common.printDefaultDatastoreWarning()
+          Datastore
+      }
+      datastore.wipeCache()
     }
-    datastore.wipeCache()
   }
 }

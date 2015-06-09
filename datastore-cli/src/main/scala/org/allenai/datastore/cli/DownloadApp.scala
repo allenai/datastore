@@ -51,22 +51,24 @@ object DownloadApp extends App {
     help("help")
   }
 
-  parser.parse(args, Config()) foreach { config =>
-    val datastore = config.datastore match {
-      case Some(datastore) => datastore
-      case None =>
-        Common.printDefaultDatastoreWarning()
-        Datastore
-    }
-    val directory = if (config.assumeDirectory) {
-      true
-    } else if (config.assumeFile) {
-      false
-    } else {
-      datastore.exists(datastore.Locator(config.group, config.name, config.version, true))
-    }
+  Common.handleDatastoreExceptions {
+    parser.parse(args, Config()) foreach { config =>
+      val datastore = config.datastore match {
+        case Some(datastore) => datastore
+        case None =>
+          Common.printDefaultDatastoreWarning()
+          Datastore
+      }
+      val directory = if (config.assumeDirectory) {
+        true
+      } else if (config.assumeFile) {
+        false
+      } else {
+        datastore.exists(datastore.Locator(config.group, config.name, config.version, true))
+      }
 
-    val locator = datastore.Locator(config.group, config.name, config.version, directory)
-    println(datastore.path(locator))
+      val locator = datastore.Locator(config.group, config.name, config.version, directory)
+      println(datastore.path(locator))
+    }
   }
 }
