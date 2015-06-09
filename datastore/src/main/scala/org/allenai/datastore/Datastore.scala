@@ -166,7 +166,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     */
   class AccessDeniedException(cause: Throwable = null) extends DsException(
     s"You don't have access to the $name datastore. " +
-      "Check https://github.com/allenai/wiki/wiki/Getting-Started#setting-up-your-developer-environment " +
+      "Check https://github.com/allenai/wiki/wiki/" +
+      "Getting-Started#setting-up-your-developer-environment " +
       "for information about configuring your system to get access.", cause
   )
 
