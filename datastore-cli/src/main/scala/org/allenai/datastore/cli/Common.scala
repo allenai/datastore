@@ -11,14 +11,14 @@ object Common {
     System.err.println("To specify another datastore (such as 'private'), use `-d private`.")
   }
 
-  def handleDatastoreExceptions[T](f: => T): Try[T] = {
+  /** Catches datastore exceptions and converts them to an error message. All other exceptions
+    * bubble up as normal.
+    */
+  def handleDatastoreExceptions(f: => Unit): Unit = {
     try {
-      Success(f)
+      f
     } catch {
-      case e: Datastore.DsException => {
-        System.err.println("Error: " + e.getMessage)
-        Failure(e)
-      }
+      case e: Datastore.DsException => System.err.println("Error: " + e.getMessage)
     }
   }
 }
