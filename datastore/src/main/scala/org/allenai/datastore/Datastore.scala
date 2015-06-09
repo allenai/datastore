@@ -128,7 +128,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   }
 
   /** Common base class for all datastore exceptions, so they can be caught together */
-  class Exception(message: String, cause: Throwable) extends scala.Exception(message, cause)
+  class DSException(message: String, cause: Throwable) extends scala.Exception(message, cause)
 
   /** Exception indicating that we tried to access an item in the datastore that wasn't there.
     *
@@ -138,7 +138,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   class DoesNotExistException(
     locator: Locator,
     cause: Throwable = null
-  ) extends Exception(
+  ) extends DSException(
     s"${locator.s3key} does not exist in the $name datastore",
     cause
   )
@@ -155,7 +155,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   class AlreadyExistsException(
     locator: Locator,
     cause: Throwable = null
-  ) extends Exception(
+  ) extends DSException(
     s"${locator.s3key} already exists in the $name datastore",
     cause
   )
@@ -164,7 +164,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     *
     * @param cause More detailed reason, or null
     */
-  class AccessDeniedException(cause: Throwable = null) extends Exception(
+  class AccessDeniedException(cause: Throwable = null) extends DSException(
     s"You don't have access to the $name datastore. " +
       "Check https://github.com/allenai/wiki/wiki/Getting-Started#setting-up-your-developer-environment " +
       "for information about configuring your system to get access.", cause
