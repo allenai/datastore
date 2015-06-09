@@ -15,7 +15,7 @@ object Common {
     try {
       Success(f)
     } catch {
-      case e: Datastore.DSException => {
+      case e: Datastore.DsException => {
         System.err.println("Error: " + e.getMessage)
         Failure(e)
       }
