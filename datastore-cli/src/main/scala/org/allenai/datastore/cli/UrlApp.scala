@@ -3,7 +3,7 @@ package org.allenai.datastore.cli
 import org.allenai.datastore.Datastore
 
 object UrlApp extends App {
-  case class Config(
+  case class Options(
     assumeFile: Boolean = false,
     assumeDirectory: Boolean = false,
     group: String = null,
@@ -12,7 +12,7 @@ object UrlApp extends App {
     datastore: Option[Datastore] = None
   )
 
-  val parser = new scopt.OptionParser[Config]("scopt") {
+  val parser = new scopt.OptionParser[Options]("scopt") {
     opt[Boolean]("assumeFile") action { (f, c) =>
       c.copy(assumeFile = f)
     } text ("Assumes that the object in the datastore is a file.")
@@ -52,7 +52,7 @@ object UrlApp extends App {
   }
 
   Common.handleDatastoreExceptions {
-    parser.parse(args, Config()) foreach { config =>
+    parser.parse(args, Options()) foreach { config =>
       val datastore = config.datastore.getOrElse {
         Common.printDefaultDatastoreWarning()
         Datastore
