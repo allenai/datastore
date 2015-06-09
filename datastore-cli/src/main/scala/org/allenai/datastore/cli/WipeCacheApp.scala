@@ -13,11 +13,9 @@ object WipeCacheApp extends App {
 
   Common.handleDatastoreExceptions {
     parser.parse(args, Config()) foreach { config =>
-      val datastore = config.datastore match {
-        case Some(datastore) => datastore
-        case None =>
-          Common.printDefaultDatastoreWarning()
-          Datastore
+      val datastore = config.datastore.getOrElse {
+        Common.printDefaultDatastoreWarning()
+        Datastore
       }
       datastore.wipeCache()
     }
