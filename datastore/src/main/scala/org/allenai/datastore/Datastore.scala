@@ -16,6 +16,8 @@ import com.amazonaws.services.s3.model._
 import com.amazonaws.services.s3.transfer.TransferManager
 import org.allenai.common.{ Logging, Resource }
 import org.apache.commons.io.FileUtils
+import org.slf4j.{ Logger, LoggerFactory }
+import ch.qos.logback.classic.Level
 
 import scala.collection.JavaConverters._
 
@@ -677,6 +679,24 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
 private object DefaultS3 extends AmazonS3Client()
 
 object Datastore extends Datastore("public", DefaultS3) {
+  /* If you don't have logging configuration, it logs everything to stdout. In the case of the AWS
+   * SDK, that means it logs every byte that goes over the wire, sometimes several times. To avoid
+   * this, regardless of logging configuration, this resets the log level for the relevant
+   * components to WARN if they haven't been set by anything else.
+   *
+   * This only works with logback.
+   */
+  try {
+    Set("org.apache.http", "com.amazonaws").foreach { silencedLogger =>
+      val awsLogger = LoggerFactory.getLogger(silencedLogger).
+        asInstanceOf[ch.qos.logback.classic.Logger]
+      if (awsLogger.getLevel == null) awsLogger.setLevel(Level.WARN)
+    }
+  } catch {
+    case _: ClassCastException =>
+    // do nothing
+  }
+
   val defaultName = Datastore.name
 
   def apply(): Datastore = Datastore(defaultName)
