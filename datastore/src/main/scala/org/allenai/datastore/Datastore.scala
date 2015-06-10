@@ -129,6 +129,9 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     }
   }
 
+  /** Common base class for all datastore exceptions, so they can be caught together */
+  class DsException(message: String, cause: Throwable) extends scala.Exception(message, cause)
+
   /** Exception indicating that we tried to access an item in the datastore that wasn't there.
     *
     * @param locator Locator of the object that wasn't there
@@ -137,7 +140,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   class DoesNotExistException(
     locator: Locator,
     cause: Throwable = null
-  ) extends Exception(
+  ) extends DsException(
     s"${locator.s3key} does not exist in the $name datastore",
     cause
   )
@@ -154,17 +157,38 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   class AlreadyExistsException(
     locator: Locator,
     cause: Throwable = null
-  ) extends Exception(
+  ) extends DsException(
     s"${locator.s3key} already exists in the $name datastore",
     cause
   )
+
+  /** Exception indicating that we tried to access a datastore that we don't have access to.
+    *
+    * @param cause More detailed reason, or null
+    */
+  class AccessDeniedException(cause: Throwable = null) extends DsException(
+    s"You don't have access to the $name datastore. " +
+      "Check https://github.com/allenai/wiki/wiki/" +
+      "Getting-Started#setting-up-your-developer-environment " +
+      "for information about configuring your system to get access.", cause
+  )
+
+  private def accessDeniedWrapper[T](f: => T): T = {
+    try {
+      f
+    } catch {
+      case e: AmazonS3Exception if e.getStatusCode == 403 =>
+        throw new AccessDeniedException(e)
+    }
+  }
 
   /** Utility function for getting an InputStream for an object in S3
     * @param key the key of the object
     * @return an InputStream with the contents of the object
     */
-  private def getS3Object(key: String): InputStream =
+  private def getS3Object(key: String): InputStream = accessDeniedWrapper {
     s3.getObject(bucketName, key).getObjectContent
+  }
 
   /** Waits until the given lockfile no longer exists
     *
@@ -390,7 +414,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   // Putting data into the datastore
   //
 
-  private def multipartUpload(path: Path, locator: Locator): Unit = {
+  private def multipartUpload(path: Path, locator: Locator): Unit = accessDeniedWrapper {
     val tm = new TransferManager(s3)
     try {
       val request = new PutObjectRequest(bucketName, locator.s3key, path.toFile)
@@ -562,7 +586,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     * @param locator locator of the item in the datastore
     * @return true if the item exists, false otherwise
     */
-  def exists(locator: Locator): Boolean = {
+  def exists(locator: Locator): Boolean = accessDeniedWrapper {
     try {
       s3.getObjectMetadata(bucketName, locator.s3key)
       true
@@ -580,7 +604,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     * @param request object listing request to send to S3
     * @return a sequence of object listings from S3
     */
-  private def getAllListings(request: ListObjectsRequest): Seq[ObjectListing] = {
+  private def getAllListings(request: ListObjectsRequest) = accessDeniedWrapper {
     def concatenateListings(
       listings: Seq[ObjectListing],
       newListing: ObjectListing
@@ -671,7 +695,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     *
     * You only need to call this if you're setting up a new datastore.
     */
-  def createBucketIfNotExists(): Unit = {
+  def createBucketIfNotExists(): Unit = accessDeniedWrapper {
     s3.createBucket(bucketName)
   }
 }

@@ -3,7 +3,7 @@ package org.allenai.datastore.cli
 import org.allenai.datastore.Datastore
 
 object DownloadApp extends App {
-  case class Config(
+  case class Options(
     assumeFile: Boolean = false,
     assumeDirectory: Boolean = false,
     group: String = null,
@@ -12,7 +12,7 @@ object DownloadApp extends App {
     datastore: Option[Datastore] = None
   )
 
-  val parser = new scopt.OptionParser[Config]("scopt") {
+  val parser = new scopt.OptionParser[Options]("scopt") {
     opt[Boolean]("assumeFile") action { (f, c) =>
       c.copy(assumeFile = f)
     } text ("Assumes that the object in the datastore is a file.")
@@ -51,22 +51,22 @@ object DownloadApp extends App {
     help("help")
   }
 
-  parser.parse(args, Config()) foreach { config =>
-    val datastore = config.datastore match {
-      case Some(datastore) => datastore
-      case None =>
+  Common.handleDatastoreExceptions {
+    parser.parse(args, Options()) foreach { config =>
+      val datastore = config.datastore.getOrElse {
         Common.printDefaultDatastoreWarning()
         Datastore
-    }
-    val directory = if (config.assumeDirectory) {
-      true
-    } else if (config.assumeFile) {
-      false
-    } else {
-      datastore.exists(datastore.Locator(config.group, config.name, config.version, true))
-    }
+      }
+      val directory = if (config.assumeDirectory) {
+        true
+      } else if (config.assumeFile) {
+        false
+      } else {
+        datastore.exists(datastore.Locator(config.group, config.name, config.version, true))
+      }
 
-    val locator = datastore.Locator(config.group, config.name, config.version, directory)
-    println(datastore.path(locator))
+      val locator = datastore.Locator(config.group, config.name, config.version, directory)
+      println(datastore.path(locator))
+    }
   }
 }
