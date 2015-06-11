@@ -100,7 +100,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     implicit val defaultOrdering = new Ordering[Locator] {
       def compare(x: Locator, y: Locator): Int = {
         val ordering = implicitly[Ordering[(String, Int, Boolean)]]
-        ordering.compare((x.name, x.version, x.directory), (y.name, x.version, x.directory))
+        ordering.compare((x.name, x.version, x.directory), (y.name, y.version, y.directory))
       }
     }
     private[Datastore] def fromKey(key: String) = {
