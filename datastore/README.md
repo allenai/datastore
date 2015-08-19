@@ -90,7 +90,10 @@ Please replace `<MYACCESSKEY>` and `<mysecretaccesskey>` as appropriate. You can
 
 ### In EC2
 
-In EC2, Amazon promises that the credentials will be fetched from the Amazon EC2 Metadata Service, which should be completely transparent and need no intervention by an admin. If that doesn't work, we can still use the approach that works for the Mac.
+There are access key files in the ops AWS keystore, located in `/opt/ops/var/s3/ops-keystore/aws/datastore` on production hosts. This includes a shell script you can source to pull in the environment variables needed. Simply add the following to your service script:
+```bash
+source /opt/ops/var/s3/ops-keystore/aws/datastore/credentials.sh
+```
 
 ### Other options
 
