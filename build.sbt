@@ -13,6 +13,8 @@ lazy val buildSettings = Seq(
     url("https://github.com/allenai/datastore"),
     "https://github.com/allenai/datastore.git")),
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+  bintrayEnsureBintrayPackageExists := {},
+  bintrayEnsureLicenses := {},
   // Override the problematic new release plugin.
   releaseProcess := Seq(
     checkSnapshotDependencies,
