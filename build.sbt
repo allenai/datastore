@@ -1,3 +1,5 @@
+import sbtrelease.ReleaseStateTransformations._
+
 lazy val buildSettings = Seq(
   organization := "org.allenai",
   crossScalaVersions := Seq("2.11.5"),
@@ -10,7 +12,21 @@ lazy val buildSettings = Seq(
   scmInfo := Some(ScmInfo(
     url("https://github.com/allenai/datastore"),
     "https://github.com/allenai/datastore.git")),
-  ReleaseKeys.publishArtifactsAction := PgpKeys.publishSigned.value,
+  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+  // Override the problematic new release plugin.
+  releaseProcess := Seq(
+    checkSnapshotDependencies,
+    inquireVersions,
+    runClean,
+    runTest,
+    setReleaseVersion,
+    commitReleaseVersion,
+    tagRelease,
+    publishArtifacts,
+    setNextVersion,
+    commitNextVersion,
+    pushChanges
+  ),
   pomExtra :=
     <developers>
       <developer>
