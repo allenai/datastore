@@ -1,5 +1,20 @@
 import sbtrelease.ReleaseStateTransformations._
 
+// Override the problematic new release plugin.
+lazy val releaseProcessSetting = releaseProcess := Seq(
+  checkSnapshotDependencies,
+  inquireVersions,
+  runClean,
+  runTest,
+  setReleaseVersion,
+  commitReleaseVersion,
+  tagRelease,
+  publishArtifacts,
+  setNextVersion,
+  commitNextVersion,
+  pushChanges
+)
+
 lazy val buildSettings = Seq(
   organization := "org.allenai",
   crossScalaVersions := Seq("2.11.5"),
@@ -13,22 +28,9 @@ lazy val buildSettings = Seq(
     url("https://github.com/allenai/datastore"),
     "https://github.com/allenai/datastore.git")),
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+  releaseProcessSetting,
   bintrayEnsureBintrayPackageExists := {},
   bintrayEnsureLicenses := {},
-  // Override the problematic new release plugin.
-  releaseProcess := Seq(
-    checkSnapshotDependencies,
-    inquireVersions,
-    runClean,
-    runTest,
-    setReleaseVersion,
-    commitReleaseVersion,
-    tagRelease,
-    publishArtifacts,
-    setNextVersion,
-    commitNextVersion,
-    pushChanges
-  ),
   pomExtra :=
     <developers>
       <developer>
@@ -59,5 +61,6 @@ lazy val datastoreRoot = Project(id = "datastoreRoot", base = file(".")).setting
   publishArtifact := false,
   publishTo := Some("dummy" at "nowhere"),
   publish := { },
-  publishLocal := { }
+  publishLocal := { },
+  releaseProcessSetting
 ).aggregate(datastore, datastoreCli).enablePlugins(LibraryPlugin)
