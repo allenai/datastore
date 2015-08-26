@@ -1,6 +1,6 @@
 package org.allenai.datastore.cli
 
-import org.allenai.datastore.Datastore
+import org.allenai.datastore.{ Datastore, Locator }
 
 object DownloadApp extends App {
   case class Options(
@@ -62,10 +62,10 @@ object DownloadApp extends App {
       } else if (config.assumeFile) {
         false
       } else {
-        datastore.exists(datastore.Locator(config.group, config.name, config.version, true))
+        datastore.exists(Locator(datastore.name, config.group, config.name, config.version, true))
       }
 
-      val locator = datastore.Locator(config.group, config.name, config.version, directory)
+      val locator = Locator(datastore.name, config.group, config.name, config.version, directory)
       println(datastore.path(locator))
     }
   }

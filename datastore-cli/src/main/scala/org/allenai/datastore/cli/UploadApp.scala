@@ -1,6 +1,6 @@
 package org.allenai.datastore.cli
 
-import org.allenai.datastore.Datastore
+import org.allenai.datastore.{ Datastore, Locator }
 
 import java.io.File
 
@@ -49,7 +49,8 @@ object UploadApp extends App {
         Datastore
       }
 
-      val locator = datastore.Locator(
+      val locator = Locator(
+        datastore.name,
         config.group,
         config.name,
         config.version,

@@ -30,7 +30,7 @@ object ListApp extends App {
         case Some(group) =>
           datastore.listGroupContents(group).foreach { l =>
             val nameSuffix = if (l.directory) "/" else ""
-            println(s"${l.name}$nameSuffix\t${l.version}")
+            println(s"${l.filename}$nameSuffix\t${l.version}")
           }
       }
     }

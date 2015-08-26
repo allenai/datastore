@@ -1,7 +1,7 @@
 package org.allenai.datastore
 
 import java.io.InputStream
-import java.net.{ URI, URL }
+import java.net.URL
 import java.nio.ByteBuffer
 import java.nio.channels.{ Channels, ReadableByteChannel, WritableByteChannel }
 import java.nio.file._
@@ -38,96 +38,14 @@ import scala.collection.JavaConverters._
   * @param s3   properly authenticated S3 client.
   */
 class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
-  private val baseCacheDir = {
-    val defaultCacheDir = if (System.getProperty("os.name").contains("Mac OS X")) {
-      Paths.get(System.getProperty("user.home")).
-        resolve("Library").
-        resolve("Caches").
-        resolve("org.allenai.datastore")
-    } else {
-      Paths.get(System.getProperty("user.home")).
-        resolve(".ai2").
-        resolve("datastore")
-    }
-
-    val envCacheDir = System.getenv("AI2_DATASTORE_DIR")
-    val propCacheDir = System.getProperty("org.allenai.datastore.dir")
-
-    Seq(envCacheDir, propCacheDir).
-      filter(_ != null).
-      map(Paths.get(_)).
-      headOption.getOrElse(defaultCacheDir)
-  }
-
-  private val cacheDir = baseCacheDir.resolve(name)
-  private val tempDir = baseCacheDir.resolve("tmp")
+  private val cacheDir = Locator.cacheDirFor(name)
+  private val tempDir = Locator.BaseCacheDir.resolve("tmp")
   // tempDir must be on the same filesystem as the cache itself, so that's why we put it here
   Files.createDirectories(tempDir)
 
   /** Returns the name of the bucket backing this datastore
     */
   def bucketName: String = s"$name.store.dev.allenai.org"
-
-  /** Identifies a single version of a file or directory in the datastore */
-  case class Locator(group: String, name: String, version: Int, directory: Boolean) {
-    require(!group.contains("/"))
-    require(!name.contains("/"))
-    require(version > 0)
-
-    private[Datastore] def nameWithVersion: String = {
-      if (directory) {
-        s"$name-d$version.zip"
-      } else {
-        val lastDotIndex = name.lastIndexOf('.')
-        if (lastDotIndex < 0) {
-          s"$name-v$version"
-        } else {
-          name.substring(0, lastDotIndex) + s"-v$version" + name.substring(lastDotIndex)
-        }
-      }
-    }
-    private[Datastore] def s3key: String = s"$group/$nameWithVersion"
-    private[Datastore] def localCacheKey: String =
-      if (directory) s3key.stripSuffix(".zip") else s3key
-    private[Datastore] def flatLocalCacheKey: String = localCacheKey.replace('/', '%')
-    private[Datastore] def localCachePath: Path = cacheDir.resolve(localCacheKey)
-    private[Datastore] def lockfilePath: Path = cacheDir.resolve(localCacheKey + ".lock")
-
-    def path = Datastore.this.path(this)
-  }
-
-  object Locator {
-    implicit val defaultOrdering = new Ordering[Locator] {
-      def compare(x: Locator, y: Locator): Int = {
-        val ordering = implicitly[Ordering[(String, Int, Boolean)]]
-        ordering.compare((x.name, x.version, x.directory), (y.name, y.version, y.directory))
-      }
-    }
-    private[Datastore] def fromKey(key: String) = {
-      val withExtension = """([^/]*)/(.*)-(.)(\d*)\.(.*)""".r
-      val withoutExtension = """([^/]*)/(.*)-(.)(\d*)""".r
-
-      // pattern matching on Int
-      object Int {
-        def unapply(s: String): Option[Int] = try {
-          Some(s.toInt)
-        } catch {
-          case _: java.lang.NumberFormatException => None
-        }
-      }
-
-      key match {
-        case withExtension(group, name, "v", Int(version), ext) =>
-          Locator(group, s"$name.$ext", version, false)
-        case withoutExtension(group, name, "v", Int(version)) =>
-          Locator(group, name, version, false)
-        case withExtension(group, name, "d", Int(version), "zip") =>
-          Locator(group, name, version, true)
-        case _ =>
-          throw new IllegalArgumentException(s"$key cannot be parsed as a datastore key")
-      }
-    }
-  }
 
   /** Common base class for all datastore exceptions, so they can be caught together */
   class DsException(message: String, cause: Throwable) extends scala.Exception(message, cause)
@@ -161,6 +79,16 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     s"${locator.s3key} already exists in the $name datastore",
     cause
   )
+
+  /** Exception indicating that the locator provided was for the wrong datastore. This is thrown if
+    * the "datastore" field in a locator doesn't match this datastore's name.
+    * @param locator the bad locator
+    */
+  class BadLocatorException(locator: Locator)
+    extends DsException(
+      s"locator for ${locator.datastore} doesn't match this datastore ($name)",
+      null
+    )
 
   /** Exception indicating that we tried to access a datastore that we don't have access to.
     *
@@ -293,25 +221,25 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     *
     * Downloads the file from S3 if necessary
     *
-    * @param group   the group of the file
-    * @param name    the name of the file
+    * @param group the group of the file
+    * @param filename the name of the file
     * @param version the version of the file
     * @return path to the file on the local filesystem
     */
-  def filePath(group: String, name: String, version: Int): Path =
-    path(Locator(group, name, version, false))
+  def filePath(group: String, filename: String, version: Int): Path =
+    path(Locator(name, group, filename, version, false))
 
   /** Gets a local path for a directory in the datastore
     *
     * Downloads the directory from S3 if necessary
     *
-    * @param group   the group of the directory
-    * @param name    the name of the directory
+    * @param group the group of the directory
+    * @param filename the name of the directory
     * @param version the version of the directory
     * @return path to the directory on the local filesystem
     */
-  def directoryPath(group: String, name: String, version: Int): Path =
-    path(Locator(group, name, version, true))
+  def directoryPath(group: String, filename: String, version: Int): Path =
+    path(Locator(name, group, filename, version, true))
 
   /** Gets a local path for an item in the datastore
     *
@@ -321,6 +249,9 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     * @return path to the item on the local filesystem
     */
   def path(locator: Locator): Path = {
+    if (locator.datastore != name) {
+      throw new BadLocatorException(locator)
+    }
     Files.createDirectories(cacheDir)
     Files.createDirectories(locator.lockfilePath.getParent)
     waitForLockfile(locator.lockfilePath)
@@ -460,18 +391,18 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     *
     * @param file      path to the file to be published
     * @param group     group to publish the file under
-    * @param name      name to publish the file under
+    * @param filename  name to publish the file under
     * @param version   version to publish the file under
     * @param overwrite if true, overwrites possible existing items in the datastore
     */
   def publishFile(
     file: Path,
     group: String,
-    name: String,
+    filename: String,
     version: Int,
     overwrite: Boolean
   ): Unit =
-    publish(file, Locator(group, name, version, false), overwrite)
+    publish(file, Locator(name, group, filename, version, false), overwrite)
 
   /** Publishes a directory to the datastore
     *
@@ -494,18 +425,18 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     *
     * @param path      path to the directory to be published
     * @param group     group to publish the directory under
-    * @param name      name to publish the directory under
+    * @param filename  name to publish the directory under
     * @param version   version to publish the directory under
     * @param overwrite if true, overwrites possible existing items in the datastore
     */
   def publishDirectory(
     path: Path,
     group: String,
-    name: String,
+    filename: String,
     version: Int,
     overwrite: Boolean
   ): Unit =
-    publish(path, Locator(group, name, version, true), overwrite)
+    publish(path, Locator(name, group, filename, version, true), overwrite)
 
   /** Publishes an item to the datastore
     *
@@ -514,6 +445,9 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     * @param overwrite if true, overwrites possible existing items in the datastore
     */
   def publish(path: Path, locator: Locator, overwrite: Boolean): Unit = {
+    if (locator.datastore != name) {
+      throw new BadLocatorException(locator)
+    }
     if (!overwrite && exists(locator)) {
       throw new AlreadyExistsException(locator)
     }
@@ -563,23 +497,23 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
 
   /** Checks whether a file exists in the datastore
     *
-    * @param group   group of the file in the datastore
-    * @param name    name of the file in the datastore
+    * @param group group of the file in the datastore
+    * @param filename name of the file in the datastore
     * @param version version of the file in the datastore
     * @return true if the file exists, false otherwise
     */
-  def fileExists(group: String, name: String, version: Int): Boolean =
-    exists(Locator(group, name, version, false))
+  def fileExists(group: String, filename: String, version: Int): Boolean =
+    exists(Locator(name, group, filename, version, false))
 
   /** Checks whether a directory exists in the datastore
     *
-    * @param group   group of the directory in the datastore
-    * @param name    name of the directory in the datastore
+    * @param group group of the directory in the datastore
+    * @param filename name of the directory in the datastore
     * @param version version of the directory in the datastore
     * @return true if the directory exists, false otherwise
     */
-  def directoryExists(group: String, name: String, version: Int): Boolean =
-    exists(Locator(group, name, version, true))
+  def directoryExists(group: String, filename: String, version: Int): Boolean =
+    exists(Locator(name, group, filename, version, true))
 
   /** Checks whether an item exists in the datastore
     *
@@ -587,6 +521,9 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     * @return true if the item exists, false otherwise
     */
   def exists(locator: Locator): Boolean = accessDeniedWrapper {
+    if (locator.datastore != name) {
+      throw new BadLocatorException(locator)
+    }
     try {
       s3.getObjectMetadata(bucketName, locator.s3key)
       true
@@ -647,7 +584,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
         withDelimiter("/")
     val objects = getAllListings(listObjectsRequest).flatMap(_.getObjectSummaries.asScala)
     objects.filter(_.getKey != group + "/").map { os =>
-      Locator.fromKey(os.getKey)
+      Locator.fromKey(name, os.getKey)
     }.to[collection.SortedSet]
   }
 
@@ -656,30 +593,34 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   //
 
   /** Gets a URL for a file in the datastore
-    * @param group   group of the file
-    * @param name    name of the file
+    * @param group group of the file
+    * @param filename name of the file
     * @param version version of the file
     * @return URL pointing to the file
     */
-  def fileUrl(group: String, name: String, version: Int): URL =
-    url(Locator(group, name, version, false))
+  def fileUrl(group: String, filename: String, version: Int): URL =
+    url(Locator(name, group, filename, version, false))
 
   /** Gets a URL for a directory in the datastore
-    * @param group   group of the directory
-    * @param name    name of the directory
+    * @param group group of the directory
+    * @param filename name of the directory
     * @param version version of the directory
     * @return URL pointing to the directory. This URL will always point to a zip file containing the
     * directory's contents.
     */
-  def directoryUrl(group: String, name: String, version: Int): URL =
-    url(Locator(group, name, version, true))
+  def directoryUrl(group: String, filename: String, version: Int): URL =
+    url(Locator(name, group, filename, version, true))
 
   /** Gets the URL for an item in the datastore
     * @param locator locator of the item
     * @return URL pointing to the locator
     */
-  def url(locator: Locator): URL =
+  def url(locator: Locator): URL = {
+    if (locator.datastore != name) {
+      throw new BadLocatorException(locator)
+    }
     new URL("http", bucketName, locator.s3key)
+  }
 
   //
   // Assorted stuff
@@ -733,38 +674,6 @@ object Datastore extends Datastore("public", DefaultS3) {
       name,
       new AmazonS3Client(new BasicAWSCredentials(accessKey, secretAccessKey))
     )
-
-  def locatorFromUrl(uri: URI) = {
-    def error = throw new IllegalArgumentException(s"$uri cannot be parsed as a datastore URI")
-
-    if (uri.getScheme == "datastore") {
-      val fileWithExtension = """([^/]+)/(.+)-v(\d+)\.(.*)""".r
-      val fileWithoutExtension = """([^/]+)/(.+)-v(\d+)""".r
-      val directory = """([^/]+)/(.+)-d(\d+)""".r
-
-      // pattern matching on Int
-      object Int {
-        def unapply(s: String): Option[Int] = try {
-          Some(s.toInt)
-        } catch {
-          case _: java.lang.NumberFormatException => None
-        }
-      }
-
-      def datastore = Datastore(uri.getAuthority)
-      uri.getPath.stripPrefix("/") match {
-        case fileWithExtension(group, name, Int(version), ext) =>
-          datastore.Locator(group, s"$name.$ext", version, false)
-        case fileWithoutExtension(group, name, Int(version)) =>
-          datastore.Locator(group, name, version, false)
-        case directory(group, name, Int(version)) =>
-          datastore.Locator(group, name, version, true)
-        case _ => error
-      }
-    } else {
-      error
-    }
-  }
 }
 
 object PrivateDatastore extends Datastore("private", DefaultS3)
