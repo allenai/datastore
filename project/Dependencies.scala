@@ -8,7 +8,7 @@ object Dependencies extends CoreDependencies {
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.0"
   val scalaReflection = "org.scala-lang" % "scala-reflect" % "2.11.5"
   val pegdown = "org.pegdown" % "pegdown" % "1.4.2"
-  val awsJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.8.9.1"
+  val awsJavaSdk = "com.amazonaws" % "aws-java-sdk-s3" % "1.10.26"
   val commonsIO = "commons-io" % "commons-io" % "2.4"
 
   // Bridge jcl to slf4j (needed to bridge logging from awsJavaSdk to slf4j)
