@@ -24,13 +24,10 @@ lazy val buildSettings = Seq(
   pomIncludeRepository := { _ => false },
   licenses := Seq("Apache 2.0" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt")),
   homepage := Some(url("https://github.com/allenai/datastore")),
+  apiURL := Some(url("https://allenai.github.io/datastore/")),
   scmInfo := Some(ScmInfo(
     url("https://github.com/allenai/datastore"),
     "https://github.com/allenai/datastore.git")),
-  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-  releaseProcessSetting,
-  bintrayEnsureBintrayPackageExists := {},
-  bintrayEnsureLicenses := {},
   bintrayPackage := s"${organization.value}:${name.value}_${scalaBinaryVersion.value}",
   pomExtra :=
     <developers>
