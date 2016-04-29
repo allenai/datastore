@@ -24,7 +24,6 @@ lazy val buildSettings = Seq(
   pomIncludeRepository := { _ => false },
   licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html")),
   homepage := Some(url("https://github.com/allenai/datastore")),
-  apiURL := Some(url("https://allenai.github.io/datastore/")),
   scmInfo := Some(ScmInfo(
     url("https://github.com/allenai/datastore"),
     "https://github.com/allenai/datastore.git")),
