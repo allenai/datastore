@@ -27,6 +27,7 @@ lazy val buildSettings = Seq(
   scmInfo := Some(ScmInfo(
     url("https://github.com/allenai/datastore"),
     "https://github.com/allenai/datastore.git")),
+  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   bintrayPackage := s"${organization.value}:${name.value}_${scalaBinaryVersion.value}",
   pomExtra :=
     <developers>
