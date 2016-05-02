@@ -16,7 +16,7 @@ lazy val releaseProcessSetting = releaseProcess := Seq(
 )
 
 lazy val buildSettings = Seq(
-  organization := "org.allenai",
+  organization := "org.allenai.datastore",
   crossScalaVersions := Seq("2.11.5"),
   scalaVersion <<= crossScalaVersions { (vs: Seq[String]) => vs.head },
   publishMavenStyle := true,
