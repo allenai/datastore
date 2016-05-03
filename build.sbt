@@ -16,21 +16,19 @@ lazy val releaseProcessSetting = releaseProcess := Seq(
 )
 
 lazy val buildSettings = Seq(
-  organization := "org.allenai",
+  organization := "org.allenai.datastore",
   crossScalaVersions := Seq("2.11.5"),
   scalaVersion <<= crossScalaVersions { (vs: Seq[String]) => vs.head },
   publishMavenStyle := true,
   publishArtifact in Test := false,
   pomIncludeRepository := { _ => false },
-  licenses := Seq("Apache 2.0" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt")),
+  licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html")),
   homepage := Some(url("https://github.com/allenai/datastore")),
   scmInfo := Some(ScmInfo(
     url("https://github.com/allenai/datastore"),
     "https://github.com/allenai/datastore.git")),
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-  releaseProcessSetting,
-  bintrayEnsureBintrayPackageExists := {},
-  bintrayEnsureLicenses := {},
+  bintrayPackage := s"${organization.value}:${name.value}_${scalaBinaryVersion.value}",
   pomExtra :=
     <developers>
       <developer>
@@ -39,8 +37,7 @@ lazy val buildSettings = Seq(
         <email>dev-role@allenai.org</email>
       </developer>
     </developers>,
-  dependencyOverrides += "com.typesafe" % "config" % "1.2.1") ++
-  PublishTo.sonatype
+  dependencyOverrides += "com.typesafe" % "config" % "1.2.1")
 
 lazy val datastore = Project(
   id = "datastore",
