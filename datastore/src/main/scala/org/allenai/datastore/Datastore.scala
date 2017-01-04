@@ -20,6 +20,8 @@ import org.slf4j.{ Logger, LoggerFactory }
 import ch.qos.logback.classic.Level
 
 import scala.collection.JavaConverters._
+import scala.util.control.NonFatal
+import scala.util.{ Success, Failure, Try, Random }
 
 /** Represents a datastore
   *
@@ -38,6 +40,27 @@ import scala.collection.JavaConverters._
   * @param s3   properly authenticated S3 client.
   */
 class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
+
+  private val random = new Random
+  private def withRetries[T](activity: String, retries: Int = 10)(f: => T): T =
+    if (retries <= 0) {
+      f
+    } else {
+      val sleepTime = random.nextInt(10000) + 10000 // sleep between 10 and 20 seconds
+      // If something goes wrong, we sleep a random amount of time, to make sure that we don't slam
+      // the server, get timeouts, wait for exactly the same amount of time on all threads, and then
+      // slam the server again.
+
+      try {
+        f
+      } catch {
+        case NonFatal(e) if !e.isInstanceOf[AccessDeniedException] && !e.isInstanceOf[DoesNotExistException] =>
+          logger.warn(s"$e while $activity. $retries retries left.")
+          Thread.sleep(sleepTime)
+          withRetries(activity, retries - 1)(f)
+      }
+    }
+
   private val baseCacheDir = {
     val defaultCacheDir = if (System.getProperty("os.name").contains("Mac OS X")) {
       Paths.get(System.getProperty("user.home")).
@@ -183,6 +206,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   }
 
   /** Utility function for getting an InputStream for an object in S3
+    *
     * @param key the key of the object
     * @return an InputStream with the contents of the object
     */
@@ -212,7 +236,6 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   /** Tries to create an empty file.
     *
     * @param file path to the file to be created
-    *
     * @return true if the file was created, false if it already exists
     */
   private def tryCreateFile(file: Path): Boolean = {
@@ -342,20 +365,22 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
           val tempFile =
             Files.createTempFile(tempDir, "ai2-datastore-" + locator.flatLocalCacheKey, ".tmp")
           TempCleanup.remember(tempFile)
-          try {
-            Resource.using2(
-              Channels.newChannel(getS3Object(locator.s3key)),
-              Files.newByteChannel(
-                tempFile,
-                StandardOpenOption.WRITE,
-                StandardOpenOption.TRUNCATE_EXISTING
-              )
-            ) {
-                case (input, output) => copyStreams(input, output, locator.s3key)
-              }
-          } catch {
-            case e: AmazonS3Exception if e.getErrorCode == "NoSuchKey" =>
-              throw new DoesNotExistException(locator, e)
+          withRetries(s"downloading ${locator.s3key}") {
+            try {
+              Resource.using2(
+                Channels.newChannel(getS3Object(locator.s3key)),
+                Files.newByteChannel(
+                  tempFile,
+                  StandardOpenOption.WRITE,
+                  StandardOpenOption.TRUNCATE_EXISTING
+                )
+              ) {
+                  case (input, output) => copyStreams(input, output, locator.s3key)
+                }
+            } catch {
+              case e: AmazonS3Exception if e.getErrorCode == "NoSuchKey" =>
+                throw new DoesNotExistException(locator, e)
+            }
           }
 
           if (locator.directory) {
@@ -414,30 +439,33 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   // Putting data into the datastore
   //
 
-  private def multipartUpload(path: Path, locator: Locator): Unit = accessDeniedWrapper {
-    val tm = new TransferManager(s3)
-    try {
-      val request = new PutObjectRequest(bucketName, locator.s3key, path.toFile)
-      request.setGeneralProgressListener(new ProgressListener {
-        private var lastLogMessage = System.currentTimeMillis()
+  private def multipartUpload(path: Path, locator: Locator): Unit =
+    withRetries(s"uploading to ${locator.s3key}") {
+      accessDeniedWrapper {
+        val tm = new TransferManager(s3)
+        try {
+          val request = new PutObjectRequest(bucketName, locator.s3key, path.toFile)
+          request.setGeneralProgressListener(new ProgressListener {
+            private var lastLogMessage = System.currentTimeMillis()
 
-        override def progressChanged(progressEvent: ProgressEvent): Unit = {
-          val now = System.currentTimeMillis()
-          if (now - lastLogMessage >= 1000) {
-            logger.info(
-              s"Uploading $path to the $name datastore. " +
-                s"${formatBytes(progressEvent.getBytesTransferred)} bytes written."
-            )
-            lastLogMessage = now
-          }
+            override def progressChanged(progressEvent: ProgressEvent): Unit = {
+              val now = System.currentTimeMillis()
+              if (now - lastLogMessage >= 1000) {
+                logger.info(
+                  s"Uploading $path to the $name datastore. " +
+                    s"${formatBytes(progressEvent.getBytesTransferred)} bytes written."
+                )
+                lastLogMessage = now
+              }
+            }
+          })
+
+          tm.upload(request).waitForCompletion()
+        } finally {
+          tm.shutdownNow(false)
         }
-      })
-
-      tm.upload(request).waitForCompletion()
-    } finally {
-      tm.shutdownNow(false)
+      }
     }
-  }
 
   /** Publishes a file to the datastore
     *
@@ -586,13 +614,15 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     * @param locator locator of the item in the datastore
     * @return true if the item exists, false otherwise
     */
-  def exists(locator: Locator): Boolean = accessDeniedWrapper {
-    try {
-      s3.getObjectMetadata(bucketName, locator.s3key)
-      true
-    } catch {
-      case e: AmazonServiceException if e.getStatusCode == 404 =>
-        false
+  def exists(locator: Locator): Boolean = withRetries(s"looking for ${locator.s3key}") {
+    accessDeniedWrapper {
+      try {
+        s3.getObjectMetadata(bucketName, locator.s3key)
+        true
+      } catch {
+        case e: AmazonServiceException if e.getStatusCode == 404 =>
+          false
+      }
     }
   }
 
@@ -601,6 +631,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   //
 
   /** Rolls up all the listings in a paged object listing from S3
+    *
     * @param request object listing request to send to S3
     * @return a sequence of object listings from S3
     */
@@ -621,9 +652,10 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   }
 
   /** Lists all groups in the datastore
+    *
     * @return a set of all groups in the datastore
     */
-  def listGroups: collection.SortedSet[String] = {
+  def listGroups: collection.SortedSet[String] = withRetries("listing all groups") {
     val listObjectsRequest =
       new ListObjectsRequest().
         withBucketName(bucketName).
@@ -635,27 +667,30 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   }
 
   /** Lists all items in a group
+    *
     * @param group group to search over
     * @return a set of locators, one for each item in the group. Multiple versions are multiple
     * locators.
     */
-  def listGroupContents(group: String): collection.SortedSet[Locator] = {
-    val listObjectsRequest =
-      new ListObjectsRequest().
-        withBucketName(bucketName).
-        withPrefix(group + "/").
-        withDelimiter("/")
-    val objects = getAllListings(listObjectsRequest).flatMap(_.getObjectSummaries.asScala)
-    objects.filter(_.getKey != group + "/").map { os =>
-      Locator.fromKey(os.getKey)
-    }.to[collection.SortedSet]
-  }
+  def listGroupContents(group: String): collection.SortedSet[Locator] =
+    withRetries(s"listing contents of group $group") {
+      val listObjectsRequest =
+        new ListObjectsRequest().
+          withBucketName(bucketName).
+          withPrefix(group + "/").
+          withDelimiter("/")
+      val objects = getAllListings(listObjectsRequest).flatMap(_.getObjectSummaries.asScala)
+      objects.filter(_.getKey != group + "/").map { os =>
+        Locator.fromKey(os.getKey)
+      }.to[collection.SortedSet]
+    }
 
   //
   // Getting URLs for datastore items
   //
 
   /** Gets a URL for a file in the datastore
+    *
     * @param group   group of the file
     * @param name    name of the file
     * @param version version of the file
@@ -665,6 +700,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     url(Locator(group, name, version, false))
 
   /** Gets a URL for a directory in the datastore
+    *
     * @param group   group of the directory
     * @param name    name of the directory
     * @param version version of the directory
@@ -675,6 +711,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     url(Locator(group, name, version, true))
 
   /** Gets the URL for an item in the datastore
+    *
     * @param locator locator of the item
     * @return URL pointing to the locator
     */
@@ -695,8 +732,10 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     *
     * You only need to call this if you're setting up a new datastore.
     */
-  def createBucketIfNotExists(): Unit = accessDeniedWrapper {
-    s3.createBucket(bucketName)
+  def createBucketIfNotExists(): Unit = withRetries(s"creating bucket $bucketName") {
+    accessDeniedWrapper {
+      s3.createBucket(bucketName)
+    }
   }
 }
 
