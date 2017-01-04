@@ -37,7 +37,7 @@ import scala.util.{ Success, Failure, Try, Random }
   * creating them here.
   *
   * @param name name of the datastore. Corresponds to the name of the bucket in S3. Currently we
-  *       have "public" and "private".
+  *      have "public" and "private".
   * @param s3   properly authenticated S3 client.
   */
 class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
