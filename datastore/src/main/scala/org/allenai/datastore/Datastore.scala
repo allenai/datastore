@@ -43,7 +43,6 @@ import scala.util.{ Success, Failure, Try, Random }
 class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
 
   private val random = new Random
-  @tailrec
   private def withRetries[T](activity: String, retries: Int = 10)(f: => T): T =
     if (retries <= 0) {
       f
