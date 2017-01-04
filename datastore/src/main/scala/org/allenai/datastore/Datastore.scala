@@ -19,6 +19,7 @@ import org.apache.commons.io.FileUtils
 import org.slf4j.{ Logger, LoggerFactory }
 import ch.qos.logback.classic.Level
 
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
 import scala.util.{ Success, Failure, Try, Random }
@@ -42,6 +43,7 @@ import scala.util.{ Success, Failure, Try, Random }
 class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
 
   private val random = new Random
+  @tailrec
   private def withRetries[T](activity: String, retries: Int = 10)(f: => T): T =
     if (retries <= 0) {
       f
