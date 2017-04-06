@@ -220,17 +220,34 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     * @param lockfile path to the lockfile
     */
   private def waitForLockfile(lockfile: Path): Unit = {
+    val oneSecond = 1000
+    val oneMinute = 60 * oneSecond
+
     // TODO: Use watch interfaces instead of busy wait
     val start = System.currentTimeMillis()
-    while (Files.exists(lockfile)) {
-      val message = s"Waiting for lockfile at $lockfile"
-      if (System.currentTimeMillis() - start > 60 * 1000) {
-        logger.warn(message)
-      } else {
-        logger.info(message)
-      }
-      val oneSecond = 1000
+
+    // The first second is free.
+    if (Files.exists(lockfile)) {
       Thread.sleep(oneSecond)
+
+      // After the first second, we print one message, then we stay silent for 10 minutes, at which
+      // point we print a message every minute.
+      if (Files.exists(lockfile)) {
+        def timeElapsed = System.currentTimeMillis() - start
+
+        logger.info(s"Starting to wait on $lockfile")
+
+        var nextMessageTime = System.currentTimeMillis() + 10 * oneMinute
+        while (Files.exists(lockfile)) {
+          if (nextMessageTime - System.currentTimeMillis() < 0) {
+            logger.warn(
+              s"Lockfile $lockfile has been blocked for ${timeElapsed / oneSecond} seconds"
+            )
+            nextMessageTime = System.currentTimeMillis() + oneMinute
+          }
+          Thread.sleep(oneSecond)
+        }
+      }
     }
   }
 
