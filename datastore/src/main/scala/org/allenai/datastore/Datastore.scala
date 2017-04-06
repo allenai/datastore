@@ -22,7 +22,7 @@ import ch.qos.logback.classic.Level
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
-import scala.util.{ Success, Failure, Try, Random }
+import scala.util.{ Failure, Random, Success, Try }
 
 /** Represents a datastore
   *
@@ -37,7 +37,7 @@ import scala.util.{ Success, Failure, Try, Random }
   * creating them here.
   *
   * @param name name of the datastore. Corresponds to the name of the bucket in S3. Currently we
-  *      have "public" and "private".
+  *    have "public" and "private".
   * @param s3   properly authenticated S3 client.
   */
 class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
@@ -220,17 +220,34 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     * @param lockfile path to the lockfile
     */
   private def waitForLockfile(lockfile: Path): Unit = {
+    val oneSecond = 1000
+    val oneMinute = 60 * oneSecond
+
     // TODO: Use watch interfaces instead of busy wait
     val start = System.currentTimeMillis()
-    while (Files.exists(lockfile)) {
-      val message = s"Waiting for lockfile at $lockfile"
-      if (System.currentTimeMillis() - start > 60 * 1000) {
-        logger.warn(message)
-      } else {
-        logger.info(message)
-      }
-      val oneSecond = 1000
+
+    // The first second is free.
+    if (Files.exists(lockfile)) {
       Thread.sleep(oneSecond)
+
+      // After the first second, we print one message, then we stay silent for 10 minutes, at which
+      // point we print a message every minute.
+      if (Files.exists(lockfile)) {
+        def timeElapsed = System.currentTimeMillis() - start
+
+        logger.info(s"Starting to wait on $lockfile")
+
+        var nextMessageTime = System.currentTimeMillis() + 10 * oneMinute
+        while (Files.exists(lockfile)) {
+          if (nextMessageTime - System.currentTimeMillis() < 0) {
+            logger.warn(
+              s"Lockfile $lockfile has been blocked for ${timeElapsed / oneSecond} seconds"
+            )
+            nextMessageTime = System.currentTimeMillis() + oneMinute
+          }
+          Thread.sleep(oneSecond)
+        }
+      }
     }
   }
 
@@ -290,7 +307,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
       if (shouldLog) {
         logger.info(
           s"Downloading $filename from the $name datastore. " +
-            s"${formatBytes(bytesCopied)} bytes read."
+            s"${formatBytes(bytesCopied)} read."
         )
         lastLogMessage = System.currentTimeMillis
       }
@@ -304,7 +321,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     if (!silent && System.currentTimeMillis - startTime >= loggingDelay) {
       logger.info(
         s"Downloaded $filename from the $name datastore. " +
-          s"${formatBytes(bytesCopied)} bytes read."
+          s"${formatBytes(bytesCopied)} read."
       )
     }
   }
@@ -454,7 +471,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
               if (now - lastLogMessage >= 1000) {
                 logger.info(
                   s"Uploading $path to the $name datastore. " +
-                    s"${formatBytes(progressEvent.getBytesTransferred)} bytes written."
+                    s"${formatBytes(progressEvent.getBytesTransferred)} written."
                 )
                 lastLogMessage = now
               }
