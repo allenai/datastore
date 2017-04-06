@@ -307,7 +307,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
       if (shouldLog) {
         logger.info(
           s"Downloading $filename from the $name datastore. " +
-            s"${formatBytes(bytesCopied)} bytes read."
+            s"${formatBytes(bytesCopied)} read."
         )
         lastLogMessage = System.currentTimeMillis
       }
@@ -321,7 +321,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     if (!silent && System.currentTimeMillis - startTime >= loggingDelay) {
       logger.info(
         s"Downloaded $filename from the $name datastore. " +
-          s"${formatBytes(bytesCopied)} bytes read."
+          s"${formatBytes(bytesCopied)} read."
       )
     }
   }
@@ -471,7 +471,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
               if (now - lastLogMessage >= 1000) {
                 logger.info(
                   s"Uploading $path to the $name datastore. " +
-                    s"${formatBytes(progressEvent.getBytesTransferred)} bytes written."
+                    s"${formatBytes(progressEvent.getBytesTransferred)} written."
                 )
                 lastLogMessage = now
               }
