@@ -22,7 +22,7 @@ import ch.qos.logback.classic.Level
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
-import scala.util.{ Success, Failure, Try, Random }
+import scala.util.{ Failure, Random, Success, Try }
 
 /** Represents a datastore
   *
@@ -37,7 +37,7 @@ import scala.util.{ Success, Failure, Try, Random }
   * creating them here.
   *
   * @param name name of the datastore. Corresponds to the name of the bucket in S3. Currently we
-  *      have "public" and "private".
+  *    have "public" and "private".
   * @param s3   properly authenticated S3 client.
   */
 class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
