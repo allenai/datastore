@@ -16,13 +16,12 @@ import com.amazonaws.services.s3.model._
 import com.amazonaws.services.s3.transfer.TransferManager
 import org.allenai.common.{ Logging, Resource }
 import org.apache.commons.io.FileUtils
-import org.slf4j.{ Logger, LoggerFactory }
+import org.slf4j.LoggerFactory
 import ch.qos.logback.classic.Level
 
-import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
-import scala.util.{ Failure, Random, Success, Try }
+import scala.util.Random
 
 /** Represents a datastore
   *
