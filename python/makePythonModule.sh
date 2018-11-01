@@ -16,6 +16,7 @@ rm -rf build/ dist/ *.egg-info/
 
 python -m jcc --include $DATASTORE_JAR $DEPENDENT_JARS \
   'org.allenai.datastore.Datastore' 'org.allenai.datastore.Datastore$' 'java.nio.file.Path' \
+  --module datastore.py \
   --maxheap 1G \
   --rename 'java.util.Iterator=JavaIterator,scala.collection.AbstractMap=ScalaAbstractMap,java.lang.Iterable=JavaIterable' \
   --python datastore \
