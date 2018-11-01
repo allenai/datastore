@@ -1,10 +1,10 @@
 To use the datastore from Python, add this to your `requirements.txt`:
 ```
 http://pip-package.dev.ai2/jcc_helper-2.0-py3-none-any.whl
-https://github.com/allenai/datastore/releases/download/v1.1.0/datastore-1.0.10-cp36-cp36m-linux_x86_64.whl; python_version == '3.6' and sys_platform == 'linux'
-https://github.com/allenai/datastore/releases/download/v1.1.0/datastore-1.0.10-cp36-cp36m-macosx_10_9_x86_64.whl; python_version == '3.6' and sys_platform == 'darwin'
-https://github.com/allenai/datastore/releases/download/v1.1.0/datastore-1.0.10-cp37-cp37m-linux_x86_64.whl; python_version == '3.7' and sys_platform == 'linux'
-https://github.com/allenai/datastore/releases/download/v1.1.0/datastore-1.0.10-cp37-cp37m-macosx_10_9_x86_64.whl; python_version == '3.7' and sys_platform == 'darwin'
+https://github.com/allenai/datastore/releases/download/v1.1.10/datastore-1.0.10-cp36-cp36m-linux_x86_64.whl; python_version == '3.6' and sys_platform == 'linux'
+https://github.com/allenai/datastore/releases/download/v1.1.10/datastore-1.0.10-cp36-cp36m-macosx_10_9_x86_64.whl; python_version == '3.6' and sys_platform == 'darwin'
+https://github.com/allenai/datastore/releases/download/v1.1.10/datastore-1.0.10-cp37-cp37m-linux_x86_64.whl; python_version == '3.7' and sys_platform == 'linux'
+https://github.com/allenai/datastore/releases/download/v1.1.10/datastore-1.0.10-cp37-cp37m-macosx_10_9_x86_64.whl; python_version == '3.7' and sys_platform == 'darwin'
 ```
 
 Then, in Python, you can say this:
