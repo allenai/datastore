@@ -11,7 +11,7 @@ class Datastore(object):
     return self.ds.filePath(group, name, version).toString()
 
   def directory(self, group: str, name: str, version: int) -> str:
-    return self.df.directoryPath(group, name, version).toString()
+    return self.ds.directoryPath(group, name, version).toString()
 
 public = Datastore(JavaDatastore.apply("public"))
 private = Datastore(JavaDatastore.apply("private"))
