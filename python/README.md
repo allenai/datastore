@@ -1,20 +1,15 @@
-To use the datastore from Python, add this to your `requirements.txt`:
+Install this library like this:
 ```
-http://pip-package.dev.ai2/jcc_helper-2.0-py3-none-any.whl
-https://github.com/allenai/datastore/releases/download/v1.2.0/datastore-1.2.0-cp36-cp36m-linux_x86_64.whl; python_version == '3.6' and sys_platform == 'linux'
-https://github.com/allenai/datastore/releases/download/v1.2.0/datastore-1.2.0-cp36-cp36m-macosx_10_9_x86_64.whl; python_version == '3.6' and sys_platform == 'darwin'
-https://github.com/allenai/datastore/releases/download/v1.2.0/datastore-1.2.0-cp37-cp37m-linux_x86_64.whl; python_version == '3.7' and sys_platform == 'linux'
-https://github.com/allenai/datastore/releases/download/v1.2.0/datastore-1.2.0-cp37-cp37m-macosx_10_9_x86_64.whl; python_version == '3.7' and sys_platform == 'darwin'
+pip install https://github.com/allenai/datastore/releases/download/v2.0/datastore-2.0-py3-none-any.whl
 ```
 
 Then, in Python, you can say this:
 ```
->>> import jcc_helper
->>> jcc_helper.jcc_helper.load_java_libraries()
->>> from datastore import datastore
-16:32:17.836 [main] DEBUG com.amazonaws.AmazonWebServiceClient - Internal logging succesfully configured to commons logger: true
-16:32:17.911 [main] DEBUG com.amazonaws.metrics.AwsSdkMetrics - Admin mbean registered under com.amazonaws.management:type=AwsSdkMetrics
-16:32:18.079 [main] DEBUG c.a.internal.config.InternalConfig - Configuration override awssdk_config_override.json not found.
->>> datastore.public.file("org.allenai.quark", "arc.txt.gz", 1)
-'/Users/dirkg/Library/Caches/org.allenai.datastore/public/org.allenai.quark/arc.txt-v1.gz'
+>>> import datastore
+>>> p = datastore.public.filePath("org.allenai.datastore", "DatastoreCli.jar", 1)  # download a file
+>>> p = datastore.public.directoryPath("org.allenai.datastore", "TestDirectory", 1)  # download a directory
 ```
+
+The Python version of the datastore cannot wipe the cache, list contents of the datastore, or
+publish new files and directories. For that, you have to use the java version or the command line.
+Pull requests are welcome!
