@@ -234,7 +234,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
       if (Files.exists(lockfile)) {
         def timeElapsed = System.currentTimeMillis() - start
 
-        logger.info(s"Starting to wait on $lockfile")
+        logger.info(s"Starting to wait for $lockfile")
 
         var nextMessageTime = System.currentTimeMillis() + 10 * oneMinute
         while (Files.exists(lockfile)) {
