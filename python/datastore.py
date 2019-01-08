@@ -227,3 +227,36 @@ class Datastore:
 
 public = Datastore("public")
 private = Datastore("private")
+
+import re
+_datastore_file_with_extension = re.compile("^datastore://([^/]+)/([^/]+)/(.+)-v(\d+)\.(.*)$")
+_datastore_file_without_extension = re.compile("^datastore://([^/]+)/([^/]+)/(.+)-v(\d+)$")
+_datastore_directory = re.compile("^datastore://([^/]+)/([^/]+)/(.+)-d(\d+)(?:/(.*))?$")
+_datastore_map = {
+    "public": public,
+    "private": private
+}
+def resolve_datastore_url(url_or_filename: str) -> str:
+    match = _datastore_file_with_extension.match(url_or_filename)
+    if match:
+        (ds, group, name, version, extension) = match.groups()
+        ds = _datastore_map[match.groups()[0]]
+        name = "%s.%s" % (name, extension)
+        version = int(version)
+        return str(ds.file(group, name, version))
+
+    match = _datastore_file_without_extension.match(url_or_filename)
+    if match:
+        (ds, group, name, version) = match.groups()
+        ds = _datastore_map[match.groups()[0]]
+        version = int(version)
+        return str(ds.file(group, name, version))
+
+    match = _datastore_directory.match(url_or_filename)
+    if match:
+        (ds, group, name, version, file_inside_directory) = match.groups()
+        ds = _datastore_map[match.groups()[0]]
+        version = int(version)
+        return str(ds.directory(group, name, version) / file_inside_directory)
+
+    return url_or_filename
