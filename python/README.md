@@ -6,8 +6,8 @@ pip install https://github.com/allenai/datastore/releases/download/v3.0.0/datast
 Then, in Python, you can say this:
 ```
 >>> import datastore
->>> p = datastore.public.filePath("org.allenai.datastore", "DatastoreCli.jar", 1)  # download a file
->>> p = datastore.public.directoryPath("org.allenai.datastore", "TestDirectory", 1)  # download a directory
+>>> p = datastore.public.file("org.allenai.datastore", "DatastoreCli.jar", 1)  # download a file
+>>> p = datastore.public.directory("org.allenai.datastore", "TestDirectory", 1)  # download a directory
 ```
 
 The Python version of the datastore cannot wipe the cache, list contents of the datastore, or
