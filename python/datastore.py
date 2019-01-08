@@ -142,10 +142,10 @@ class Datastore:
                 next_message_time = time.time() + 60
             time.sleep(1)
 
-    def filePath(self, group: str, name: str, version: int) -> Path:
+    def file(self, group: str, name: str, version: int) -> Path:
         return self.path(Locator(group, name, version, False))
 
-    def directoryPath(self, group: str, name: str, version: int) -> Path:
+    def directory(self, group: str, name: str, version: int) -> Path:
         return self.path(Locator(group, name, version, True))
 
     def path(self, locator: Locator) -> Path:
