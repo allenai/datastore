@@ -236,7 +236,7 @@ _datastore_map = {
     "public": public,
     "private": private
 }
-def resolve_datastore_url(url_or_filename: str) -> str:
+def resolve_url(url_or_filename: str) -> str:
     match = _datastore_file_with_extension.match(url_or_filename)
     if match:
         (ds, group, name, version, extension) = match.groups()
