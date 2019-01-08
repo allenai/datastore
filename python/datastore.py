@@ -28,7 +28,7 @@ def _cleanup_cleanup_paths() -> None:
         assert path.is_absolute()   # safety
         shutil.rmtree(path)
     _cleanup_paths = set()
-atexit.register(_cleanup_paths)
+atexit.register(_cleanup_cleanup_paths)
 
 def remember_cleanup(p: Union[Path, str]) -> None:
     global _cleanup_paths
@@ -101,7 +101,7 @@ class Datastore:
                 self.cache_dir = self.cache_dir / ".ai2" / "datastore"
             else:
                 raise ValueError("Unsupported platform: %s" % platform.system())
-        self.temp_dir = self.cache_dir / "temp" # temp has to be on the same filesystem as the cache itself, so that's why we put it here
+        self.temp_dir = self.cache_dir / "tmp" # temp has to be on the same filesystem as the cache itself, so that's why we put it here
         self.cache_dir = self.cache_dir / name
 
         _mkpath(self.temp_dir)
@@ -198,32 +198,32 @@ class Datastore:
                 temp_file.seek(0)
 
                 if locator.directory:
-                    temp_zip_dir = tempfile.TemporaryDirectory(
+                    temp_zip_dir = tempfile.mkdtemp(
                         dir=self.temp_dir,
                         prefix=f"ai2-datastore-{locator.flat_local_cache_key()}")
-                    remember_cleanup(temp_zip_dir.name)
+                    remember_cleanup(temp_zip_dir)
 
                     with zipfile.ZipFile(temp_file) as zip_file:
                         zip_file.extractall(temp_zip_dir)
 
-                    Path(temp_zip_dir.name).rename(local_cache_path)
-                    forget_cleanup(temp_zip_dir.name)
+                    Path(temp_zip_dir).rename(local_cache_path)
+                    forget_cleanup(temp_zip_dir)
                 else:
                     _mkpath(local_cache_path.parent)
                     temp_file.close()
                     Path(temp_file.name).rename(local_cache_path)
-                    temp_file = None
                     forget_cleanup(temp_file.name)
+                    temp_file = None
             finally:
                 if temp_file is not None:
                     temp_file.close()
                     os.remove(temp_file.name)
                     forget_cleanup(temp_file.name)
-
-
         finally:
             lockfile_path.unlink()
             forget_cleanup(lockfile_path)
+
+        return local_cache_path
 
 public = Datastore("public")
 private = Datastore("private")
