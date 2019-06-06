@@ -246,6 +246,33 @@ class Datastore:
 
         return local_cache_path
 
+    def publish_file(self, file: Path, group: str, name: str, version: int, overwrite: bool):
+        self.publish(file, Locator(group, name, version, False), overwrite)
+
+    def publish_directory(self, file: Path, group: str, name: str, version: int, overwrite: bool):
+        self.publish(file, Locator(group, name, version, True), overwrite)
+
+    def publish(self, file: Path, locator: Locator, overwrite: bool):
+        if not overwrite and self.exists(locator):
+            raise AlreadyExistsError(locator)
+
+        if locator.directory:
+            raise NotImplementedError("This version of the Python datastore client cannot upload directories.")
+        else:
+            self.bucket.upload_file(file, locator.s3_key())
+
+            # Make sure we have the file in the local cache right away.
+            lockfile_path = self._lockfile_path(locator)
+            _mkpath(lockfile_path.parent)
+            remember_cleanup(lockfile_path)
+            try:
+                shutil.copy(file, lockfile_path)
+                lockfile_path.rename(self._local_cache_path(locator))
+            finally:
+                if lockfile_path.exists():
+                    lockfile_path.unlink()
+                forget_cleanup(lockfile_path)
+
 public = Datastore("public")
 private = Datastore("private")
 
