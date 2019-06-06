@@ -77,7 +77,8 @@ class Locator(NamedTuple):
         return self.local_cache_key().replace('/', '%')
 
 class DsError(Exception):
-    pass
+    def __init__(self, locator: Locator):
+        self.locator = locator
 
 class DoesNotExistError(DsError):
     pass
@@ -211,7 +212,7 @@ class Datastore:
                     if e is None:
                         raise
                     if e == '404':
-                        raise DoesNotExistError()
+                        raise DoesNotExistError(locator)
                     else:
                         raise
 
