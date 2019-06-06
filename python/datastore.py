@@ -142,6 +142,26 @@ class Datastore:
                 next_message_time = time.time() + 60
             time.sleep(1)
 
+    def exists(self, locator: Locator) -> bool:
+        try:
+            object = self.bucket.Object(locator.s3_key())
+            object.load()
+        except botocore.exceptions.ClientError as e:
+            e = e.response
+            if e is None:
+                raise
+            e = e.get('Error')
+            if e is None:
+                raise
+            e = e.get('Code')
+            if e is None:
+                raise
+            if e == '404':
+                return False
+            else:
+                raise
+        return True
+
     def file(self, group: str, name: str, version: int) -> Path:
         return self.path(Locator(group, name, version, False))
 
