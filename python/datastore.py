@@ -184,10 +184,10 @@ class Datastore:
                     e = e.response
                     if e is None:
                         raise
-                    e = e.get['Error']
+                    e = e.get('Error')
                     if e is None:
                         raise
-                    e = e.get['Code']
+                    e = e.get('Code')
                     if e is None:
                         raise
                     if e == '404':
