@@ -10,7 +10,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='datastore',
-    version='3.1.0',
+    version='3.2.0',
     description='Store for immutable objects in S3',
     long_description=long_description,
     url='https://github.com/allenai/datastore',
