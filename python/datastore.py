@@ -257,7 +257,18 @@ class Datastore:
             raise AlreadyExistsError(locator)
 
         if locator.directory:
-            raise NotImplementedError("This version of the Python datastore client cannot upload directories.")
+            with tempfile.NamedTemporaryFile(
+                dir=self.temp_dir,
+                prefix=locator.flat_local_cache_key(),
+                suffix=".ai2-datastore.upload.zip"
+            ) as zip_file_base:
+                with zipfile.ZipFile(zip_file_base, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
+                    # This does not write out empty directories. I don't know if that's possible in
+                    # zip files, but the Scala code suggests that it is.
+                    for path in file.rglob("*"):
+                        zip_file.write(str(path), arcname=str(path.relative_to(file)))
+                zip_file_base.flush()
+                self.bucket.upload_file(zip_file_base.name, locator.s3_key())
         else:
             self.bucket.upload_file(file, locator.s3_key())
 
