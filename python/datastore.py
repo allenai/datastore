@@ -47,6 +47,9 @@ def forget_cleanup(p: Union[Path, str]) -> None:
 #
 
 _s3 = boto3.resource('s3')
+_s3_public = boto3.resource('s3')
+from botocore.handlers import disable_signing
+_s3_public.meta.client.meta.events.register('choose-signer.s3.*', disable_signing)
 
 class Locator(NamedTuple):
     group: str
@@ -107,7 +110,10 @@ class Datastore:
 
         _mkpath(self.temp_dir)
 
-        self.bucket = _s3.Bucket(f"{name}.store.dev.allenai.org")
+        s3 = _s3
+        if name == "public":
+            s3 = _s3_public
+        self.bucket = s3.Bucket(f"{name}.store.dev.allenai.org")
 
         self.logger = logging.getLogger(f"org.allenai.datastore.Datastore.{name}")
 

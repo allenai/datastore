@@ -1,6 +1,6 @@
 Install this library like this:
 ```
-pip install https://github.com/allenai/datastore/releases/download/v3.2.0/datastore-3.2.0-py3-none-any.whl
+pip install https://github.com/allenai/datastore/releases/download/v3.2.1/datastore-3.2.1-py3-none-any.whl
 ```
 
 Then, in Python, you can say this:
