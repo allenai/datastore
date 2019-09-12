@@ -29,10 +29,7 @@ lazy val projectSettings = Seq(
           <email>dev-role@allenai.org</email>
         </developer>
       </developers>),
-  //releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-  bintrayPackage := s"${organization.value}:${name.value}_${scalaBinaryVersion.value}",
-  bintrayOrganization := Some("allenai"),
-  bintrayRepository := "maven",
+  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   dependencyOverrides += "com.typesafe" % "config" % "1.2.1"
 )
 
