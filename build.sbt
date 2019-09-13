@@ -1,23 +1,18 @@
-import sbtrelease.ReleaseStateTransformations._
+import Dependencies._
+import ReleaseTransformations._
 
-// Override the problematic new release plugin.
-lazy val releaseProcessSetting = releaseProcess := Seq(
-  checkSnapshotDependencies,
-  inquireVersions,
-  runClean,
-  runTest,
-  setReleaseVersion,
-  commitReleaseVersion,
-  tagRelease,
-  publishArtifacts,
-  setNextVersion,
-  commitNextVersion,
-  pushChanges
-)
+lazy val scala211 = "2.11.12"
+lazy val scala212 = "2.12.9"
+lazy val scala213 = "2.13.0" // Not supported yet (collections changes required in common)
+lazy val supportedScalaVersions = List(scala212, scala211)
 
-lazy val buildSettings = Seq(
-  organization := "org.allenai.datastore",
-  crossScalaVersions := Seq("2.11.8"),
+ThisBuild / organization := "org.allenai.datastore"
+ThisBuild / scalaVersion := scala212
+
+lazy val projectSettings = Seq(
+  crossScalaVersions := supportedScalaVersions,
+  resolvers ++= Seq(Resolver.bintrayRepo("allenai", "maven")),
+  dependencyOverrides ++= Logging.loggingDependencyOverrides,
   publishMavenStyle := true,
   publishArtifact in Test := false,
   pomIncludeRepository := { _ => false },
@@ -26,37 +21,63 @@ lazy val buildSettings = Seq(
   scmInfo := Some(ScmInfo(
     url("https://github.com/allenai/datastore"),
     "https://github.com/allenai/datastore.git")),
+  pomExtra := (
+      <developers>
+        <developer>
+          <id>allenai-dev-role</id>
+          <name>Allen Institute for Artificial Intelligence</name>
+          <email>dev-role@allenai.org</email>
+        </developer>
+      </developers>),
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-  bintrayPackage := s"${organization.value}:${name.value}_${scalaBinaryVersion.value}",
-  pomExtra :=
-    <developers>
-      <developer>
-        <id>allenai-dev-role</id>
-        <name>Allen Institute for Artificial Intelligence</name>
-        <email>dev-role@allenai.org</email>
-      </developer>
-    </developers>,
-  dependencyOverrides += "com.typesafe" % "config" % "1.2.1")
+  dependencyOverrides += "com.typesafe" % "config" % "1.2.1",
+)
 
-lazy val datastore = Project(
-  id = "datastore",
-  base = file("datastore"),
-  settings = buildSettings ++ Defaults.itSettings
-).enablePlugins(LibraryPlugin).
-  configs(IntegrationTest)
+inConfig(IntegrationTest)(org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings)
 
-lazy val datastoreCli = Project(
-  id = "datastore-cli",
-  base = file("datastore-cli"),
-  settings = buildSettings
-).dependsOn(datastore).
-  enablePlugins(LibraryPlugin)
+lazy val root = (project in file("."))
+    .aggregate(
+      datastore,
+      cli
+    )
+    .configs(IntegrationTest)
+    .settings(
+      crossScalaVersions := Nil,
+      publish / skip := true,
 
-lazy val datastoreRoot = Project(id = "datastoreRoot", base = file(".")).settings(
-  // Don't publish a jar for the root project.
-  publishArtifact := false,
-  publishTo := Some("dummy" at "nowhere"),
-  publish := { },
-  publishLocal := { },
-  releaseProcessSetting
-).aggregate(datastore, datastoreCli).enablePlugins(LibraryPlugin)
+      /*
+       * See https://www.scala-sbt.org/1.x/docs/Cross-Build.html#Note+about+sbt-release
+       *
+       * TLDR: sbt-release copies "+" from sbt 0.13 and the below is a workaround for using
+       * sbt-release along with sbt 1.0+ and cross-compilation.
+       */
+      releaseCrossBuild := false,
+      releaseProcess := Seq[ReleaseStep](
+        checkSnapshotDependencies,
+        inquireVersions,
+        runClean,
+        releaseStepCommandAndRemaining("+it:test"), // No non-integ tests currently
+        setReleaseVersion,
+        commitReleaseVersion,
+        tagRelease,
+        releaseStepCommandAndRemaining("+publishSigned"),
+        setNextVersion,
+        commitNextVersion,
+        pushChanges
+      )
+    )
+
+lazy val datastore = (project in file("datastore"))
+    .settings(
+      Defaults.itSettings,
+      projectSettings
+    )
+    .configs(IntegrationTest)
+
+lazy val cli = (project in file("datastore-cli"))
+    .settings(
+      Defaults.itSettings,
+      projectSettings
+    )
+    .dependsOn(datastore)
+    .configs(IntegrationTest)

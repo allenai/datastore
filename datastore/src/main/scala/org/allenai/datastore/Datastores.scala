@@ -10,6 +10,7 @@ import java.nio.file.{ Files, Path }
   * override it by overriding the datastoreGroup member.
   */
 trait Datastores {
+
   /** The name of the group used in the other methods of this trait. Override this if you need
     * another group name.
     */

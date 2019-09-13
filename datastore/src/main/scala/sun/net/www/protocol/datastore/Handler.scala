@@ -13,11 +13,12 @@ class Handler extends URLStreamHandler {
 
     // pattern matching on Int
     object Int {
-      def unapply(s: String): Option[Int] = try {
-        Some(s.toInt)
-      } catch {
-        case _: java.lang.NumberFormatException => None
-      }
+      def unapply(s: String): Option[Int] =
+        try {
+          Some(s.toInt)
+        } catch {
+          case _: java.lang.NumberFormatException => None
+        }
     }
 
     val path = u.getPath.stripPrefix("/") match {

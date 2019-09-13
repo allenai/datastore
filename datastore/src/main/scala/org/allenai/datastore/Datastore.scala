@@ -54,7 +54,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
       try {
         f
       } catch {
-        case NonFatal(e) if !e.isInstanceOf[AccessDeniedException] && !e.isInstanceOf[DoesNotExistException] =>
+        case NonFatal(e)
+            if !e.isInstanceOf[AccessDeniedException] && !e.isInstanceOf[DoesNotExistException] =>
           logger.warn(s"$e while $activity. $retries retries left.")
           Thread.sleep(sleepTime)
           withRetries(activity, retries - 1)(f)
@@ -63,23 +64,23 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
 
   private val baseCacheDir = {
     val defaultCacheDir = if (System.getProperty("os.name").contains("Mac OS X")) {
-      Paths.get(System.getProperty("user.home")).
-        resolve("Library").
-        resolve("Caches").
-        resolve("org.allenai.datastore")
+      Paths
+        .get(System.getProperty("user.home"))
+        .resolve("Library")
+        .resolve("Caches")
+        .resolve("org.allenai.datastore")
     } else {
-      Paths.get(System.getProperty("user.home")).
-        resolve(".ai2").
-        resolve("datastore")
+      Paths.get(System.getProperty("user.home")).resolve(".ai2").resolve("datastore")
     }
 
     val envCacheDir = System.getenv("AI2_DATASTORE_DIR")
     val propCacheDir = System.getProperty("org.allenai.datastore.dir")
 
-    Seq(envCacheDir, propCacheDir).
-      filter(_ != null).
-      map(Paths.get(_)).
-      headOption.getOrElse(defaultCacheDir)
+    Seq(envCacheDir, propCacheDir)
+      .filter(_ != null)
+      .map(Paths.get(_))
+      .headOption
+      .getOrElse(defaultCacheDir)
   }
 
   private val cacheDir = baseCacheDir.resolve(name)
@@ -132,11 +133,12 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
 
       // pattern matching on Int
       object Int {
-        def unapply(s: String): Option[Int] = try {
-          Some(s.toInt)
-        } catch {
-          case _: java.lang.NumberFormatException => None
-        }
+        def unapply(s: String): Option[Int] =
+          try {
+            Some(s.toInt)
+          } catch {
+            case _: java.lang.NumberFormatException => None
+          }
       }
 
       key match {
@@ -164,9 +166,9 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     locator: Locator,
     cause: Throwable = null
   ) extends DsException(
-    s"${locator.s3key} does not exist in the $name datastore",
-    cause
-  )
+        s"${locator.s3key} does not exist in the $name datastore",
+        cause
+      )
 
   /** Exception indicating that we tried to upload an item to the datastore that already exists.
     *
@@ -181,20 +183,22 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     locator: Locator,
     cause: Throwable = null
   ) extends DsException(
-    s"${locator.s3key} already exists in the $name datastore",
-    cause
-  )
+        s"${locator.s3key} already exists in the $name datastore",
+        cause
+      )
 
   /** Exception indicating that we tried to access a datastore that we don't have access to.
     *
     * @param cause More detailed reason, or null
     */
-  class AccessDeniedException(cause: Throwable = null) extends DsException(
-    s"You don't have access to the $name datastore. " +
-      "Check https://github.com/allenai/wiki/wiki/" +
-      "Getting-Started#setting-up-your-developer-environment " +
-      "for information about configuring your system to get access.", cause
-  )
+  class AccessDeniedException(cause: Throwable = null)
+      extends DsException(
+        s"You don't have access to the $name datastore. " +
+          "Check https://github.com/allenai/wiki/wiki/" +
+          "Getting-Started#setting-up-your-developer-environment " +
+          "for information about configuring your system to get access.",
+        cause
+      )
 
   private def accessDeniedWrapper[T](f: => T): T = {
     try {
@@ -314,8 +318,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
 
     buffer.flip()
     bytesCopied += buffer.remaining()
-    while (buffer.hasRemaining)
-      oc.write(buffer)
+    while (buffer.hasRemaining) oc.write(buffer)
 
     if (!silent && System.currentTimeMillis - startTime >= loggingDelay) {
       logger.info(
@@ -366,7 +369,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     waitForLockfile(locator.lockfilePath)
 
     if ((locator.directory && Files.isDirectory(locator.localCachePath)) ||
-      (!locator.directory && Files.isRegularFile(locator.localCachePath))) {
+        (!locator.directory && Files.isRegularFile(locator.localCachePath))) {
       locator.localCachePath
     } else {
       val created = tryCreateFile(locator.lockfilePath)
@@ -392,8 +395,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
                   StandardOpenOption.TRUNCATE_EXISTING
                 )
               ) {
-                  case (input, output) => copyStreams(input, output, locator.s3key)
-                }
+                case (input, output) => copyStreams(input, output, locator.s3key)
+              }
             } catch {
               case e: AmazonS3Exception if e.getErrorCode == "NoSuchKey" =>
                 throw new DoesNotExistException(locator, e)
@@ -425,8 +428,8 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
                         StandardOpenOption.TRUNCATE_EXISTING
                       )
                     ) {
-                        case (input, output) => copyStreams(input, output, locator.s3key, true)
-                      }
+                      case (input, output) => copyStreams(input, output, locator.s3key, true)
+                    }
                   }
                 }
               }
@@ -573,23 +576,26 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
       TempCleanup.remember(zipFile)
       try {
         Resource.using(new ZipOutputStream(Files.newOutputStream(zipFile))) { zip =>
-          Files.walkFileTree(path, new SimpleFileVisitor[Path] {
-            override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult = {
-              zip.putNextEntry(new ZipEntry(path.relativize(file).toString))
-              Files.copy(file, zip)
-              FileVisitResult.CONTINUE
-            }
-
-            override def preVisitDirectory(
-              dir: Path,
-              attrs: BasicFileAttributes
-            ): FileVisitResult = {
-              if (dir != path) {
-                zip.putNextEntry(new ZipEntry(path.relativize(dir).toString + "/"))
+          Files.walkFileTree(
+            path,
+            new SimpleFileVisitor[Path] {
+              override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult = {
+                zip.putNextEntry(new ZipEntry(path.relativize(file).toString))
+                Files.copy(file, zip)
+                FileVisitResult.CONTINUE
               }
-              FileVisitResult.CONTINUE
+
+              override def preVisitDirectory(
+                dir: Path,
+                attrs: BasicFileAttributes
+              ): FileVisitResult = {
+                if (dir != path) {
+                  zip.putNextEntry(new ZipEntry(path.relativize(dir).toString + "/"))
+                }
+                FileVisitResult.CONTINUE
+              }
             }
-          })
+          )
         }
 
         multipartUpload(zipFile, locator)
@@ -674,13 +680,11 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     */
   def listGroups: collection.SortedSet[String] = withRetries("listing all groups") {
     val listObjectsRequest =
-      new ListObjectsRequest().
-        withBucketName(bucketName).
-        withPrefix("").
-        withDelimiter("/")
+      new ListObjectsRequest().withBucketName(bucketName).withPrefix("").withDelimiter("/")
     getAllListings(listObjectsRequest)
       .flatMap(_.getCommonPrefixes.asScala)
-      .map(_.stripSuffix("/")).to[collection.SortedSet]
+      .map(_.stripSuffix("/"))
+      .to[collection.SortedSet]
   }
 
   /** Lists all items in a group
@@ -692,14 +696,17 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
   def listGroupContents(group: String): collection.SortedSet[Locator] =
     withRetries(s"listing contents of group $group") {
       val listObjectsRequest =
-        new ListObjectsRequest().
-          withBucketName(bucketName).
-          withPrefix(group + "/").
-          withDelimiter("/")
+        new ListObjectsRequest()
+          .withBucketName(bucketName)
+          .withPrefix(group + "/")
+          .withDelimiter("/")
       val objects = getAllListings(listObjectsRequest).flatMap(_.getObjectSummaries.asScala)
-      objects.filter(_.getKey != group + "/").map { os =>
-        Locator.fromKey(os.getKey)
-      }.to[collection.SortedSet]
+      objects
+        .filter(_.getKey != group + "/")
+        .map { os =>
+          Locator.fromKey(os.getKey)
+        }
+        .to[collection.SortedSet]
     }
 
   //
@@ -768,8 +775,8 @@ object Datastore extends Datastore("public", DefaultS3) {
    */
   try {
     Set("org.apache.http", "com.amazonaws").foreach { silencedLogger =>
-      val awsLogger = LoggerFactory.getLogger(silencedLogger).
-        asInstanceOf[ch.qos.logback.classic.Logger]
+      val awsLogger =
+        LoggerFactory.getLogger(silencedLogger).asInstanceOf[ch.qos.logback.classic.Logger]
       if (awsLogger.getLevel == null) awsLogger.setLevel(Level.WARN)
     }
   } catch {
@@ -800,11 +807,12 @@ object Datastore extends Datastore("public", DefaultS3) {
 
       // pattern matching on Int
       object Int {
-        def unapply(s: String): Option[Int] = try {
-          Some(s.toInt)
-        } catch {
-          case _: java.lang.NumberFormatException => None
-        }
+        def unapply(s: String): Option[Int] =
+          try {
+            Some(s.toInt)
+          } catch {
+            case _: java.lang.NumberFormatException => None
+          }
       }
 
       def datastore = Datastore(uri.getAuthority)
