@@ -1,5 +1,4 @@
 import Dependencies._
-import ReleaseTransformations._
 
 lazy val scala211 = "2.11.12"
 lazy val scala212 = "2.12.9"
@@ -8,6 +7,7 @@ lazy val supportedScalaVersions = List(scala212, scala211)
 
 ThisBuild / organization := "org.allenai.datastore"
 ThisBuild / scalaVersion := scala212
+ThisBuild / version      := "2.0.0"
 
 lazy val projectSettings = Seq(
   crossScalaVersions := supportedScalaVersions,
@@ -29,8 +29,9 @@ lazy val projectSettings = Seq(
           <email>dev-role@allenai.org</email>
         </developer>
       </developers>),
-  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-  dependencyOverrides += "com.typesafe" % "config" % "1.2.1",
+  bintrayPackage := s"${organization.value}:${name.value}_${scalaBinaryVersion.value}",
+  bintrayOrganization := Some("allenai"),
+  bintrayRepository := "maven"
 )
 
 inConfig(IntegrationTest)(org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings)
@@ -43,28 +44,7 @@ lazy val root = (project in file("."))
     .configs(IntegrationTest)
     .settings(
       crossScalaVersions := Nil,
-      publish / skip := true,
-
-      /*
-       * See https://www.scala-sbt.org/1.x/docs/Cross-Build.html#Note+about+sbt-release
-       *
-       * TLDR: sbt-release copies "+" from sbt 0.13 and the below is a workaround for using
-       * sbt-release along with sbt 1.0+ and cross-compilation.
-       */
-      releaseCrossBuild := false,
-      releaseProcess := Seq[ReleaseStep](
-        checkSnapshotDependencies,
-        inquireVersions,
-        runClean,
-        releaseStepCommandAndRemaining("+it:test"), // No non-integ tests currently
-        setReleaseVersion,
-        commitReleaseVersion,
-        tagRelease,
-        releaseStepCommandAndRemaining("+publishSigned"),
-        setNextVersion,
-        commitNextVersion,
-        pushChanges
-      )
+      publish / skip := true
     )
 
 lazy val datastore = (project in file("datastore"))
