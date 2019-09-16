@@ -2,7 +2,7 @@ package org.allenai.datastore.cli
 
 import org.allenai.datastore.Datastore
 
-import scala.util.{ Try, Failure, Success }
+import scala.util.{ Failure, Success, Try }
 
 object Common {
   def printDefaultDatastoreWarning() = {

@@ -25,7 +25,7 @@ jobs:
           command: cat /dev/null | sbt clean
       - run:
           name: Test package (only integration tests)
-          command: cat /dev/null | sbt +it:test
+          command: cat /dev/null | sbt +test
       - run:
           name: Check formatting
           command: cat /dev/null | sbt scalafmtCheckAll

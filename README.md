@@ -9,12 +9,17 @@ The real READMEs are [here for the API](datastore/README.md) and [here for the C
 
 ### Releasing
 
-To set up for release, follow the instructions [in the `nlpstack` readme](https://github.com/allenai/nlpstack#releasing-new-versions).
+This project releases to BinTray.  To make a release:
 
-The release instructions are also accurate, although you need to set your deploy branch's upstream to `git@github.com:allenai/datastore.git/master`.
+1. Pull the latest code on the master branch that you want to release
+1. Edit `build.sbt` to remove "-SNAPSHOT" from the current version
+1. Create a pull request if desired or push to master if you are only changing the version
+1. Tag the release `git tag -a vX.Y.Z -m "Release X.Y.Z"` replacing X.Y.Z with the correct version
+1. Push the tag back to origin `git push origin vX.Y.Z`
+1. Release the build on Bintray `sbt +publish` (the "+" is required to cross-compile)
+1. Verify publication [on bintray.com](https://bintray.com/allenai/maven)
+1. Bump the version in `build.sbt` on master (and push!) with X.Y.Z+1-SNAPSHOT (e.g., 2.5.1
+-SNAPSHOT after releasing 2.5.0)
 
-Assuming `git@github.com:allenai/datastore.git` is set to your remote `upstream`, this can be done with:
-```bash
-# From your deploy branch.
-git branch -u upstream/master
-```
+If you make a mistake you can rollback the release with `sbt bintrayUnpublish` and retag the
+ version to a different commit as necessary.
