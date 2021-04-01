@@ -17,6 +17,7 @@ object GlobalPlugin extends AutoPlugin {
       scalaVersion := ScalaVersions.SCALA_213,
       CodeArtifactKeys.codeArtifactUrl := "https://org-allenai-s2-896129387501.d.codeartifact.us-west-2.amazonaws.com/maven/private",
       fork in Test := true,
+      libraryDependencies += scalaCollectionCompat,
       dependencyOverrides ++= Logging.loggingDependencyOverrides
     )
 }

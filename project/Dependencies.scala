@@ -1,6 +1,8 @@
 import sbt._
 
 object Dependencies {
+  val scalaCollectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.3"
+
   val commonVersion = "2.3.1"
   val allenAiCommon = "org.allenai.common" %% "common-core" % commonVersion
   val allenAiTestkit = "org.allenai.common" %% "common-testkit" % commonVersion
