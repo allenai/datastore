@@ -9,6 +9,7 @@ object Release {
     releaseProcess := Nil,
     publish / skip := true
   )
+
   val publishSettings: Seq[Def.Setting[_]] = Seq(
     crossScalaVersions := ScalaVersions.SUPPORTED_SCALA_VERSIONS,
     publishArtifact in Test := false,
@@ -27,14 +28,14 @@ object Release {
     checkSnapshotDependencies,
     inquireVersions,
     runClean,
-    // releaseStepCommandAndRemaining("+test"),
-    // releaseStepCommandAndRemaining("+it:test"),
+    releaseStepCommandAndRemaining("+test"),
+    releaseStepCommandAndRemaining("+it:test"),
     setReleaseVersion,
-    // commitReleaseVersion,
-    // tagRelease,
-    releaseStepCommandAndRemaining("+codeArtifactPublish")
-    // setNextVersion,
-    // commitNextVersion,
-    // pushChanges
+    commitReleaseVersion,
+    tagRelease,
+    releaseStepCommandAndRemaining("+codeArtifactPublish"),
+    setNextVersion,
+    commitNextVersion,
+    pushChanges
   )
 }
