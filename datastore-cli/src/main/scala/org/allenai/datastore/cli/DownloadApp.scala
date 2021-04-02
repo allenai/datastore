@@ -13,11 +13,11 @@ object DownloadApp extends App {
   )
 
   val parser = new scopt.OptionParser[Options]("scopt") {
-    opt[Boolean]("assumeFile") action { (f, c) =>
+    opt[Boolean]("assumeFile").action { (f, c) =>
       c.copy(assumeFile = f)
     } text ("Assumes that the object in the datastore is a file.")
 
-    opt[Boolean]("assumeDirectory") action { (d, c) =>
+    opt[Boolean]("assumeDirectory").action { (d, c) =>
       c.copy(assumeDirectory = d)
     } text ("Assumes that the object in the datastore is a directory.")
 
@@ -34,19 +34,19 @@ object DownloadApp extends App {
         "whether the object in the datastore is a file or a directory."
     )
 
-    opt[String]('g', "group") required () action { (g, c) =>
+    opt[String]('g', "group").required().action { (g, c) =>
       c.copy(group = g)
     } text ("Group name of the object in the datastore")
 
-    opt[String]('n', "name") required () action { (n, c) =>
+    opt[String]('n', "name").required().action { (n, c) =>
       c.copy(name = n)
     } text ("Name of the object in the datastore")
 
-    opt[Int]('v', "version") required () action { (v, c) =>
+    opt[Int]('v', "version").required().action { (v, c) =>
       c.copy(version = v)
     } text ("Version number of the object in the datastore")
 
-    opt[String]('d', "datastore") action { (d, c) =>
+    opt[String]('d', "datastore").action { (d, c) =>
       c.copy(datastore = Some(Datastore(d)))
     } text (s"Datastore to use. Default is ${Datastore.defaultName}")
 

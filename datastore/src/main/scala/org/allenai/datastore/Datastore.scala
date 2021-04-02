@@ -19,6 +19,7 @@ import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 import ch.qos.logback.classic.Level
 
+import scala.collection.compat._
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
 import scala.util.Random
@@ -684,7 +685,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
     getAllListings(listObjectsRequest)
       .flatMap(_.getCommonPrefixes.asScala)
       .map(_.stripSuffix("/"))
-      .to[collection.SortedSet]
+      .to(collection.SortedSet)
   }
 
   /** Lists all items in a group
@@ -706,7 +707,7 @@ class Datastore(val name: String, val s3: AmazonS3Client) extends Logging {
         .map { os =>
           Locator.fromKey(os.getKey)
         }
-        .to[collection.SortedSet]
+        .to(collection.SortedSet)
     }
 
   //

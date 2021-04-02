@@ -1,8 +1,11 @@
 import sbt._
 
 object Dependencies {
-  val allenAiCommon = "org.allenai.common" %% "common-core" % "2.0.0"
-  val allenAiTestkit = "org.allenai.common" %% "common-testkit" % "2.0.0"
+  val scalaCollectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.3"
+
+  val commonVersion = "2.3.1"
+  val allenAiCommon = "org.allenai.common" %% "common-core" % commonVersion
+  val allenAiTestkit = "org.allenai.common" %% "common-testkit" % commonVersion
 
   val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.11.4"
   val scalaTest = "org.scalatest" %% "scalatest" % "3.0.8"
@@ -44,19 +47,19 @@ object Dependencies {
         // Exclude the transitive dependencies that might mess things up for us.
         // slf4j replaces log4j.
         (module
-            exclude ("log4j", "log4j")
-            exclude ("commons-logging", "commons-logging")
-            // We're using logback as the slf4j implementation, and we're providing it below.
-            exclude ("org.slf4j", "slf4j-log4j12")
-            exclude ("org.slf4j", "slf4j-jdk14")
-            exclude ("org.slf4j", "slf4j-jcl")
-            exclude ("org.slf4j", "slf4j-simple")
-            // We'll explicitly provide the logback version; this avoids having to do an override.
-            exclude ("ch.qos.logback", "logback-core")
-            exclude ("ch.qos.logback", "logback-classic")
-            // We add bridges explicitly as well
-            exclude ("org.slf4j", "log4j-over-slf4j")
-            exclude ("org.slf4j", "jcl-over-slf4j"))
+          exclude ("log4j", "log4j")
+          exclude ("commons-logging", "commons-logging")
+        // We're using logback as the slf4j implementation, and we're providing it below.
+          exclude ("org.slf4j", "slf4j-log4j12")
+          exclude ("org.slf4j", "slf4j-jdk14")
+          exclude ("org.slf4j", "slf4j-jcl")
+          exclude ("org.slf4j", "slf4j-simple")
+        // We'll explicitly provide the logback version; this avoids having to do an override.
+          exclude ("ch.qos.logback", "logback-core")
+          exclude ("ch.qos.logback", "logback-classic")
+        // We add bridges explicitly as well
+          exclude ("org.slf4j", "log4j-over-slf4j")
+          exclude ("org.slf4j", "jcl-over-slf4j"))
       }
     }
     // Now, add the logging libraries.

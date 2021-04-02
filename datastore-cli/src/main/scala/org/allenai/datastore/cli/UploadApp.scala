@@ -15,27 +15,27 @@ object UploadApp extends App {
   )
 
   val parser = new scopt.OptionParser[Options]("scopt") {
-    opt[File]('p', "path") required () action { (p, c) =>
+    opt[File]('p', "path").required().action { (p, c) =>
       c.copy(path = p)
     } text ("Path to the file or directory you want uploaded")
 
-    opt[String]('g', "group") required () action { (g, c) =>
+    opt[String]('g', "group").required().action { (g, c) =>
       c.copy(group = g)
     } text ("Group name to store the file or directory under")
 
-    opt[String]('n', "name") required () action { (n, c) =>
+    opt[String]('n', "name").required().action { (n, c) =>
       c.copy(name = n)
     } text ("Name to store the file or directory under")
 
-    opt[Int]('v', "version") required () action { (v, c) =>
+    opt[Int]('v', "version").required().action { (v, c) =>
       c.copy(version = v)
     } text ("Version number to store the file or directory under")
 
-    opt[String]('d', "datastore") action { (d, c) =>
+    opt[String]('d', "datastore").action { (d, c) =>
       c.copy(datastore = Some(Datastore(d)))
     } text (s"Datastore to use. Default is ${Datastore.defaultName}")
 
-    opt[Boolean]("overwrite") action { (_, c) =>
+    opt[Boolean]("overwrite").action { (_, c) =>
       c.copy(overwrite = true)
     } text ("Overwrite if the group, version, and name already exists")
 
@@ -43,7 +43,7 @@ object UploadApp extends App {
   }
 
   Common.handleDatastoreExceptions {
-    parser.parse(args, Options()) foreach { config =>
+    parser.parse(args, Options()).foreach { config =>
       val datastore = config.datastore.getOrElse {
         Common.printDefaultDatastoreWarning()
         Datastore
